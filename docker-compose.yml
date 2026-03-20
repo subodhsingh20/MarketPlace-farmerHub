@@ -8,10 +8,8 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - MONGO_URI=${mongodb+srv://subodhkumarsingh23_db_user:dJGx2NJIvEKqhAoC@cluster-farmer-marketpl.yzdgj7t.mongodb.net/?appName=Cluster-farmer-marketplace}
+      - MONGO_URI=${MONGO_URI}
       - NODE_ENV=production
-    depends_on:
-      - mongodb
     networks:
       - app-network
 

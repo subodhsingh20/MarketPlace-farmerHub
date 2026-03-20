@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   backend:
     image: subodhsingh20/farmer-marketplace-backend:latest
     ports:
       - "5000:5000"
     environment:
-      - MONGO_URI=${MONGO_URI}
+      - MONGODB_URI=${MONGODB_URI}
       - NODE_ENV=production
     networks:
       - app-network
@@ -17,7 +15,7 @@ services:
     ports:
       - "80:80"
     environment:
-      - REACT_APP_API=http://your-server-ip:5000
+      - REACT_APP_API=http://backend:5000
     depends_on:
       - backend
     networks:

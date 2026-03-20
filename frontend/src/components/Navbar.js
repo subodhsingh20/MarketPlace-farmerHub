@@ -99,7 +99,7 @@ function Navbar() {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-lg lg:text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition-colors duration-300">
-                  Farmer Marketplace
+                  Farmer Marketplace by subodh kumar singh
                 </h1>
                 <p className="text-xs lg:text-sm text-gray-600 group-hover:text-emerald-500 transition-colors duration-300">
                   Fresh produce, nearby farmers
