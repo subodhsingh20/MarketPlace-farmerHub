@@ -56,7 +56,7 @@ function Home() {
                   Open Farmer Dashboard
                 </Link>
                 <Link to="/products" className="border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 w-full sm:w-auto text-center">
-                  View My Catalog
+                  View My products
                 </Link>
               </div>
             </div>
