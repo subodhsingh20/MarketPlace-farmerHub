@@ -4,6 +4,13 @@ const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
 });
 
+const storedToken =
+  typeof window !== "undefined" ? window.localStorage.getItem("token") : null;
+
+if (storedToken) {
+  api.defaults.headers.common.Authorization = `Bearer ${storedToken}`;
+}
+
 export function registerUser(payload) {
   return api.post("/auth/register", payload);
 }
@@ -20,8 +27,20 @@ export function getNearbyProducts(latitude, longitude) {
   return api.get(`/products/nearby?latitude=${latitude}&longitude=${longitude}`);
 }
 
+export function getNearestFarmers(latitude, longitude) {
+  return api.get(`/farmers/nearest?lat=${latitude}&lon=${longitude}`);
+}
+
+export function geocodeAddress(address) {
+  return api.get(`/auth/geocode?q=${encodeURIComponent(address)}`);
+}
+
 export function createPaymentOrder(payload) {
   return api.post("/payments/create-order", payload);
+}
+
+export function createMockPayment(payload) {
+  return api.post("/payment/mock", payload);
 }
 
 export function verifyPayment(payload) {
@@ -44,16 +63,37 @@ export function updateOrderStatus(orderId, status) {
   return api.patch(`/orders/${orderId}/status`, { status });
 }
 
-export function rateProduct(productId, rating) {
-  return api.post(`/ratings/products/${productId}`, { rating });
-}
-
-export function rateFarmer(farmerId, rating) {
-  return api.post(`/ratings/farmers/${farmerId}`, { rating });
-}
-
 export function getProductsByFarmer(farmerId) {
   return api.get(`/products/farmer/${farmerId}`);
+}
+
+export function sendChatMessage(payload) {
+  return api.post("/chat/send", payload);
+}
+
+export function markChatAsRead(payload) {
+  return api.patch("/chat/read", payload);
+}
+
+export function getChatHistory(senderId, receiverId, orderId) {
+  const query = new URLSearchParams({
+    senderId,
+    receiverId,
+  });
+
+  if (orderId) {
+    query.set("orderId", orderId);
+  }
+
+  return api.get(`/chat/history?${query.toString()}`);
+}
+
+export function getChatConversations() {
+  return api.get("/chat/conversations");
+}
+
+export function deleteChatConversation(otherUserId) {
+  return api.delete(`/chat/conversation/${otherUserId}`);
 }
 
 export function addProduct(payload) {

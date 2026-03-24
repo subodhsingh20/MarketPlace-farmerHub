@@ -1,9 +1,17 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User");
-
-const getRoomId = (firstUserId, secondUserId) =>
-  [String(firstUserId), String(secondUserId)].sort().join("__");
+const {
+  emitChatEvents,
+  emitTypingEvent,
+} = require("./controllers/chatController");
+const {
+  createChatMessage,
+  findChatRecipient,
+  formatChatMessage,
+  getRoomId,
+  markConversationAsRead,
+} = require("./services/chatService");
 
 const initializeSocket = (server) => {
   const io = new Server(server, {
@@ -50,23 +58,90 @@ const initializeSocket = (server) => {
       socket.join(roomId);
     });
 
-    socket.on("send_message", ({ recipientId, text }) => {
-      if (!recipientId || !text?.trim()) {
+    const handleChatMessage = async ({
+      receiverId,
+      recipientId,
+      message,
+      text,
+      orderId,
+      imageUrl,
+    }) => {
+      const targetReceiverId = receiverId || recipientId;
+      const messageText = message || text;
+
+      if (!targetReceiverId || (!messageText?.trim() && !String(imageUrl || "").trim())) {
         return;
       }
 
-      const roomId = getRoomId(socket.user._id, recipientId);
-      const message = {
-        id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
-        senderId: String(socket.user._id),
-        senderName: socket.user.name,
-        recipientId: String(recipientId),
-        text: text.trim(),
-        timestamp: new Date().toISOString(),
-      };
+      try {
+        const recipient = await findChatRecipient(targetReceiverId);
 
-      io.to(roomId).emit("receive_message", message);
+        if (!recipient) {
+          return;
+        }
+
+        const savedMessage = await createChatMessage({
+          sender: socket.user,
+          recipient,
+          text: messageText,
+          orderId,
+          imageUrl,
+        });
+
+        emitChatEvents({
+          sender: socket.user,
+          recipient,
+          chatMessage: formatChatMessage(savedMessage),
+        });
+      } catch (_error) {
+        // Keep the socket alive even if chat persistence fails.
+      }
+    };
+
+    socket.on("typing", ({ receiverId, isTyping }) => {
+      if (!receiverId) {
+        return;
+      }
+
+      emitTypingEvent({
+        senderId: socket.user._id,
+        receiverId,
+        senderName: socket.user.name,
+        isTyping,
+      });
     });
+
+    socket.on("mark_read", async ({ otherUserId, orderId }) => {
+      if (!otherUserId) {
+        return;
+      }
+
+      try {
+        const updatedCount = await markConversationAsRead({
+          currentUserId: String(socket.user._id),
+          otherUserId: String(otherUserId),
+          orderId,
+        });
+
+        if (updatedCount > 0) {
+          const roomId = getRoomId(socket.user._id, otherUserId);
+          const payload = {
+            userId: String(socket.user._id),
+            otherUserId: String(otherUserId),
+            orderId: orderId || null,
+            timestamp: new Date().toISOString(),
+          };
+
+          io.to(roomId).emit("messagesRead", payload);
+          io.to(String(otherUserId)).emit("messagesRead", payload);
+        }
+      } catch (_error) {
+        // Keep the socket alive if read receipt persistence fails.
+      }
+    });
+
+    socket.on("chatMessage", handleChatMessage);
+    socket.on("send_message", handleChatMessage);
   });
 
   return io;

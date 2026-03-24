@@ -5,12 +5,20 @@ import { useCart } from "../context/CartContext";
 import { useSocket } from "../context/SocketContext";
 import FadeIn from "../components/FadeIn";
 import {
+  createMockPayment,
   createPaymentOrder,
   getUserOrders,
   verifyPayment,
 } from "../services/authService";
 
+const PAYMENT_MODE =
+  (process.env.REACT_APP_PAYMENT_MODE || "test").toLowerCase() === "live"
+    ? "live"
+    : "test";
 const RAZORPAY_KEY_ID = process.env.REACT_APP_RAZORPAY_KEY_ID || "";
+const LIVE_PAYMENT_GATEWAY_URL =
+  process.env.REACT_APP_PAYMENT_GATEWAY_URL ||
+  "https://checkout.razorpay.com/v1/checkout.js";
 
 function CustomerDashboard() {
   const { user } = useAuth();
@@ -62,10 +70,16 @@ function CustomerDashboard() {
       loadOrders();
     };
 
+    const handleChatAlert = (alert) => {
+      setAlerts((current) => [alert, ...current].slice(0, 6));
+    };
+
     socket.on("order_alert", handleOrderAlert);
+    socket.on("chat_message", handleChatAlert);
 
     return () => {
       socket.off("order_alert", handleOrderAlert);
+      socket.off("chat_message", handleChatAlert);
     };
   }, [socket]);
 
@@ -86,7 +100,7 @@ function CustomerDashboard() {
 
       const script = document.createElement("script");
       script.id = "razorpay-checkout-script";
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.src = LIVE_PAYMENT_GATEWAY_URL;
       script.async = true;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
@@ -99,16 +113,35 @@ function CustomerDashboard() {
       return;
     }
 
-    if (!RAZORPAY_KEY_ID) {
-      setCheckoutError("Add REACT_APP_RAZORPAY_KEY_ID to your frontend environment.");
-      return;
-    }
-
     setIsProcessingPayment(true);
     setCheckoutError("");
     setCheckoutMessage("");
 
     try {
+      const paymentPayload = {
+        products: cartItems.map((item) => ({
+          productId: item._id,
+          quantity: item.quantityInCart,
+        })),
+        fulfillmentType,
+      };
+
+      if (PAYMENT_MODE === "test") {
+        await createMockPayment(paymentPayload);
+        clearCart();
+        setCheckoutMessage("Payment successful (test mode).");
+        setCheckoutError("");
+        await loadOrders();
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      if (!RAZORPAY_KEY_ID) {
+        setCheckoutError("Add REACT_APP_RAZORPAY_KEY_ID to your frontend environment.");
+        setIsProcessingPayment(false);
+        return;
+      }
+
       const isLoaded = await loadRazorpayScript();
 
       if (!isLoaded) {
@@ -117,13 +150,7 @@ function CustomerDashboard() {
         return;
       }
 
-      const response = await createPaymentOrder({
-        products: cartItems.map((item) => ({
-          productId: item._id,
-          quantity: item.quantityInCart,
-        })),
-        fulfillmentType,
-      });
+      const response = await createPaymentOrder(paymentPayload);
 
       const { amount, keyId, razorpayOrderId } = response.data;
 
@@ -142,7 +169,7 @@ function CustomerDashboard() {
           try {
             await verifyPayment(paymentResponse);
             clearCart();
-            setCheckoutMessage("Payment successful and order placed.");
+            setCheckoutMessage("Payment successful.");
             setCheckoutError("");
             loadOrders();
           } catch (requestError) {
@@ -166,7 +193,9 @@ function CustomerDashboard() {
       razorpay.open();
     } catch (requestError) {
       setCheckoutError(
-        requestError.response?.data?.message || "Failed to start payment."
+        requestError.response?.data?.message ||
+          requestError.response?.data?.error ||
+          "Failed to start payment."
       );
       setIsProcessingPayment(false);
     }
@@ -175,22 +204,22 @@ function CustomerDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
       <FadeIn>
-        <div className="max-w-7xl mx-auto px-4 py-8 lg:px-8">
+        <div className="responsive-shell">
           {/* Hero Section */}
           <FadeIn delay={0.1}>
-            <div className="bg-white rounded-2xl lg:rounded-3xl p-8 lg:p-12 mb-8 shadow-2xl border border-gray-100">
+            <div className="responsive-card mb-6 border border-gray-100 bg-white shadow-2xl">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
                 <div className="lg:col-span-2">
-                  <span className="inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full mb-6">Customer Dashboard</span>
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                  <span className="responsive-chip mb-5 inline-block bg-emerald-100 text-emerald-800">Customer Dashboard</span>
+                  <h1 className="responsive-title mb-5 font-bold">
                     Welcome back, {user?.name}.
                   </h1>
-                  <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
+                  <p className="responsive-copy max-w-2xl">
                     Review cart activity, track live order updates, and move through checkout with a cleaner purchase flow.
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-8 text-white">
+                <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 p-6 text-white">
                   <h3 className="text-lg font-semibold mb-6">Quick Summary</h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -211,12 +240,12 @@ function CustomerDashboard() {
             </div>
           </FadeIn>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             {/* Main Content */}
             <div className="xl:col-span-2 space-y-8">
               {/* Alerts Section */}
               <FadeIn delay={0.2}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Your Alerts</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
@@ -258,7 +287,7 @@ function CustomerDashboard() {
 
               {/* Cart Section */}
               <FadeIn delay={0.3}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Your Cart</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
@@ -279,7 +308,7 @@ function CustomerDashboard() {
                   ) : (
                     <div className="space-y-6">
                       {cartItems.map((item) => (
-                        <div key={item._id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                        <div key={item._id} className="rounded-xl border border-gray-200 bg-gray-50 p-5">
                           <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6">
                             <img
                               src={item.imageUrl}
@@ -355,7 +384,7 @@ function CustomerDashboard() {
 
               {/* Orders Section */}
               <FadeIn delay={0.4}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Your Orders</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
@@ -376,7 +405,7 @@ function CustomerDashboard() {
                   ) : (
                     <div className="space-y-4">
                       {orders.map((order) => (
-                        <div key={order._id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                        <div key={order._id} className="rounded-xl border border-gray-200 bg-gray-50 p-5">
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                             <div>
                               <h3 className="text-lg font-semibold text-gray-900">Order #{String(order._id).slice(-6)}</h3>
@@ -413,7 +442,7 @@ function CustomerDashboard() {
             <div className="space-y-8">
               {/* Cart Summary */}
               <FadeIn delay={0.5}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100" id="cart-summary">
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl" id="cart-summary">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Cart Summary</h2>
 
                   <div className="space-y-6">
@@ -472,7 +501,9 @@ function CustomerDashboard() {
                           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                           </svg>
-                          Pay with Razorpay
+                          {PAYMENT_MODE === "test"
+                            ? "Pay in Test Mode"
+                            : "Pay with Razorpay"}
                         </div>
                       )}
                     </button>
@@ -525,7 +556,11 @@ function CustomerDashboard() {
                             </svg>
                           </div>
                         </div>
-                        <p className="text-xs text-purple-600 mt-2">Connected to Razorpay</p>
+                        <p className="text-xs text-purple-600 mt-2">
+                          {PAYMENT_MODE === "test"
+                            ? "Mock gateway enabled"
+                            : "Connected to Razorpay"}
+                        </p>
                       </div>
                     </div>
                   </div>

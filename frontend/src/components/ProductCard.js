@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import ContactOptions from "./ContactOptions";
+import ProductImage from "./ProductImage";
 
 const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
   const renderStars = (rating) => {
@@ -38,10 +40,12 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
     <article className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col justify-between h-full transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:-translate-y-1">
       {/* Product Image */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-        <img
+        <ProductImage
           src={product.imageUrl}
           alt={product.name}
+          productName={product.name}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+          fallbackClassName="w-full h-full object-cover p-6"
         />
         <div className="absolute top-3 right-3">
           <span className="inline-block px-3 py-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-bold rounded-full shadow-lg">
@@ -103,8 +107,16 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="mt-auto">
+        <div className="mt-auto space-y-4">
+          {product.farmerId?._id && (
+            <ContactOptions
+              farmerId={product.farmerId._id}
+              farmerName={product.farmerId?.name || "Farmer"}
+              phone={product.farmerId?.phone}
+              chatLabel="Chat"
+            />
+          )}
+
           {isCustomer ? (
             <button
               type="button"

@@ -1,18 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import ProductMap from "../components/ProductMap";
+import FarmerMap from "../components/FarmerMap";
 import FadeIn from "../components/FadeIn";
+import ContactOptions from "../components/ContactOptions";
+import ProductImage from "../components/ProductImage";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import {
   getAllProducts,
+  getNearestFarmers,
   getNearbyProducts,
   getProductsByFarmer,
-  rateFarmer,
-  rateProduct,
 } from "../services/authService";
-
-const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "";
 
 function ProductListing() {
   const { user } = useAuth();
@@ -27,7 +26,8 @@ function ProductListing() {
   const [locationError, setLocationError] = useState("");
   const [selectedFarmerId, setSelectedFarmerId] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
-  const [ratingState, setRatingState] = useState({});
+  const [nearestFarmerId, setNearestFarmerId] = useState(null);
+  const resultsSectionRef = useRef(null);
 
   useEffect(() => {
     if (isFarmer && user?.id) {
@@ -112,71 +112,33 @@ function ProductListing() {
   const getCartQuantity = (productId) =>
     cartItems.find((item) => item._id === productId)?.quantityInCart || 0;
 
-  const getPhoneLinks = (phone) => {
-    const sanitizedPhone = (phone || "").replace(/[^\d+]/g, "");
+  const searchSuggestions = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return {
-      tel: `tel:${sanitizedPhone}`,
-      whatsapp: `https://wa.me/${sanitizedPhone.replace(/^\+/, "")}`,
-    };
-  };
-
-  const handleRatingChange = (key, value) => {
-    setRatingState((current) => ({
-      ...current,
-      [key]: {
-        ...(current[key] || {}),
-        value,
-      },
-    }));
-  };
-
-  const submitProductRating = async (productId) => {
-    const rating = Number(ratingState[`product_${productId}`]?.value || 0);
-
-    if (!rating) {
-      return;
+    if (!normalizedSearch) {
+      return [];
     }
 
-    try {
-      const response = await rateProduct(productId, rating);
-      const updatedProduct = response.data.product;
+    return products
+      .filter((product) => {
+        const matchesName = product.name.toLowerCase().includes(normalizedSearch);
+        const matchesCategory =
+          selectedCategory === "all" || product.category === selectedCategory;
 
-      setProducts((current) =>
-        current.map((product) => (product._id === productId ? updatedProduct : product))
-      );
-    } catch (_error) {
-      setError("Failed to save product rating.");
-    }
-  };
+        return matchesName && matchesCategory;
+      })
+      .slice(0, 5);
+  }, [products, searchTerm, selectedCategory]);
 
-  const submitFarmerRating = async (farmerId) => {
-    const rating = Number(ratingState[`farmer_${farmerId}`]?.value || 0);
+  const handleSuggestionSelect = (productName) => {
+    setSearchTerm(productName);
 
-    if (!rating) {
-      return;
-    }
-
-    try {
-      const response = await rateFarmer(farmerId, rating);
-      const updatedFarmer = response.data.farmer;
-
-      setProducts((current) =>
-        current.map((product) =>
-          String(product.farmerId?._id || product.farmerId) === String(farmerId)
-            ? {
-                ...product,
-                farmerId: {
-                  ...product.farmerId,
-                  averageRating: updatedFarmer.averageRating,
-                },
-              }
-            : product
-        )
-      );
-    } catch (_error) {
-      setError("Failed to save farmer rating.");
-    }
+    window.requestAnimationFrame(() => {
+      resultsSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   };
 
   const farmerGroups = useMemo(() => {
@@ -212,7 +174,37 @@ function ProductListing() {
     farmerGroups.find((group) => group.id === selectedFarmerId) || null;
 
   useEffect(() => {
+    if (isFarmer || !userLocation) {
+      return;
+    }
+
+    const loadNearestFarmers = async () => {
+      try {
+        const response = await getNearestFarmers(
+          userLocation.latitude,
+          userLocation.longitude
+        );
+        const nearestFarmer = response.data.nearestFarmer;
+
+        if (nearestFarmer?.id) {
+          setNearestFarmerId(String(nearestFarmer.id));
+          setSelectedFarmerId((current) => current || String(nearestFarmer.id));
+        }
+      } catch (_error) {
+        setNearestFarmerId(null);
+      }
+    };
+
+    loadNearestFarmers();
+  }, [isFarmer, userLocation]);
+
+  useEffect(() => {
     if (isFarmer) {
+      return;
+    }
+
+    if (nearestFarmerId && farmerGroups.some((group) => group.id === nearestFarmerId)) {
+      setSelectedFarmerId((current) => current || nearestFarmerId);
       return;
     }
 
@@ -228,31 +220,31 @@ function ProductListing() {
     ) {
       setSelectedFarmerId(farmerGroups[0].id);
     }
-  }, [farmerGroups, isFarmer, selectedFarmerId]);
+  }, [farmerGroups, isFarmer, nearestFarmerId, selectedFarmerId]);
 
   // Farmer View
   if (isFarmer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
         <FadeIn>
-          <div className="max-w-7xl mx-auto px-4 py-8 lg:px-8">
+          <div className="responsive-shell">
             {/* Header */}
             <FadeIn delay={0.1}>
-              <div className="bg-white rounded-2xl lg:rounded-3xl p-8 lg:p-12 mb-8 shadow-2xl border border-gray-100">
+              <div className="responsive-card mb-6 border border-gray-100 bg-white shadow-2xl">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                   <div>
-                    <span className="inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full mb-6">My catalog</span>
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                    <span className="responsive-chip mb-5 inline-block bg-emerald-100 text-emerald-800">My catalog</span>
+                    <h1 className="responsive-title mb-5 font-bold">
                       Review your active product listings.
                     </h1>
-                    <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
-                      Farmers see only their own catalog here, so this page stays focused on inventory visibility instead of buyer-only actions like cart, ratings, and purchase flow.
+                    <p className="responsive-copy max-w-2xl">
+                      Farmers see only their own catalog here, so this page stays focused on inventory visibility instead of buyer-only actions like cart and purchase flow.
                     </p>
                   </div>
 
                   <Link
                     to="/farmer-dashboard"
-                    className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-lg inline-flex items-center"
+                    className="inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-3 text-base font-bold text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:from-emerald-700 hover:to-green-700 hover:shadow-2xl"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -266,45 +258,45 @@ function ProductListing() {
 
             {/* Stats Cards */}
             <FadeIn delay={0.2}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+              <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-200 sm:h-11 sm:w-11">
+                      <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     </div>
                   </div>
-                  <h3 className="text-sm font-medium text-blue-800 mb-1">Total Products</h3>
-                  <p className="text-2xl font-bold text-blue-900">{products.length}</p>
+                  <h3 className="mb-1 text-sm font-medium text-blue-800">Total Products</h3>
+                  <p className="text-xl font-bold text-blue-900 sm:text-2xl">{products.length}</p>
                   <p className="text-xs text-blue-600 mt-1">In your catalog</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 sm:p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-emerald-200 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-200 sm:h-11 sm:w-11">
+                      <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                       </svg>
                     </div>
                   </div>
-                  <h3 className="text-sm font-medium text-emerald-800 mb-1">Total Units</h3>
-                  <p className="text-2xl font-bold text-emerald-900">
+                  <h3 className="mb-1 text-sm font-medium text-emerald-800">Total Units</h3>
+                  <p className="text-xl font-bold text-emerald-900 sm:text-2xl">
                     {products.reduce((total, product) => total + Number(product.quantity || 0), 0)}
                   </p>
                   <p className="text-xs text-emerald-600 mt-1">Currently listed</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+                <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4 sm:p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 sm:h-11 sm:w-11">
+                      <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     </div>
                   </div>
-                  <h3 className="text-sm font-medium text-purple-800 mb-1">Combined Value</h3>
-                  <p className="text-2xl font-bold text-purple-900">
+                  <h3 className="mb-1 text-sm font-medium text-purple-800">Combined Value</h3>
+                  <p className="text-xl font-bold text-purple-900 sm:text-2xl">
                     ₹{products.reduce((total, product) => total + Number(product.price || 0), 0)}
                   </p>
                   <p className="text-xs text-purple-600 mt-1">Visible price points</p>
@@ -347,17 +339,19 @@ function ProductListing() {
                   <p className="text-gray-600">Add products from the farmer dashboard.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                   {products.map((product) => (
-                    <div key={product._id} className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                    <div key={product._id} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl transition-all duration-300 hover:shadow-2xl md:hover:scale-[1.01]">
                       <div className="aspect-w-1 aspect-h-1">
-                        <img
+                        <ProductImage
                           src={product.imageUrl}
                           alt={product.name}
+                          productName={product.name}
                           className="w-full h-48 object-cover"
+                          fallbackClassName="w-full h-48 object-cover p-4"
                         />
                       </div>
-                      <div className="p-6">
+                      <div className="p-5">
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900 mb-1">{product.name}</h3>
@@ -373,7 +367,6 @@ function ProductListing() {
                           </div>
                           <div className="text-sm text-gray-600">
                             <p>Available: {product.quantity} units</p>
-                            <p>Rating: {product.averageRating || 0} / 5 ⭐</p>
                           </div>
                         </div>
 
@@ -406,22 +399,22 @@ function ProductListing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
       <FadeIn>
-        <div className="max-w-7xl mx-auto px-4 py-8 lg:px-8">
+        <div className="responsive-shell">
           {/* Header */}
           <FadeIn delay={0.1}>
-            <div className="bg-white rounded-2xl lg:rounded-3xl p-8 lg:p-12 mb-8 shadow-2xl border border-gray-100">
+            <div className="responsive-card mb-6 border border-gray-100 bg-white shadow-2xl">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                 <div>
-                  <span className="inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full mb-6">Marketplace</span>
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                  <span className="responsive-chip mb-5 inline-block bg-emerald-100 text-emerald-800">Marketplace</span>
+                  <h1 className="responsive-title mb-5 font-bold">
                     Browse fresh products from nearby farms.
                   </h1>
-                  <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
+                  <p className="responsive-copy max-w-2xl">
                     Search by product, compare categories, view sellers on the map, and quickly move from discovery to contact and checkout.
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-6 text-white">
+                <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 p-5 text-white">
                   <div className="text-center">
                     <div className="text-2xl font-bold mb-2">{filteredProducts.length}</div>
                     <div className="text-emerald-100 text-sm">Visible Listings</div>
@@ -433,19 +426,94 @@ function ProductListing() {
 
           {/* Search and Filters */}
           <FadeIn delay={0.2}>
-            <div className="bg-white rounded-2xl p-6 mb-8 shadow-xl border border-gray-100">
+            <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-xl">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Search Products
                   </label>
-                  <input
-                    type="search"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Search by product name..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
-                  />
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <input
+                        type="search"
+                        value={searchTerm}
+                        onChange={(event) => setSearchTerm(event.target.value)}
+                        placeholder="Search by product name..."
+                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
+                      />
+                      {searchTerm && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchTerm("")}
+                          className="absolute inset-y-0 right-3 inline-flex items-center text-gray-400 hover:text-emerald-600 transition-colors"
+                          aria-label="Clear search"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+
+                    {searchTerm.trim() && (
+                      <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-3 sm:p-4">
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                          <p className="text-sm font-semibold text-gray-800">
+                            Matching products
+                          </p>
+                          <span className="text-xs font-medium text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
+                            {filteredProducts.length} found
+                          </span>
+                        </div>
+
+                        {searchSuggestions.length > 0 ? (
+                          <div className="space-y-2">
+                            {searchSuggestions.map((product) => (
+                              <button
+                                key={product._id}
+                                type="button"
+                                onClick={() => handleSuggestionSelect(product.name)}
+                                className="w-full rounded-xl border border-white/80 bg-white px-3 py-3 text-left shadow-sm transition-all duration-300 hover:border-emerald-200 hover:shadow-md"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <ProductImage
+                                    src={product.imageUrl}
+                                    alt={product.name}
+                                    productName={product.name}
+                                    className="h-14 w-14 flex-shrink-0 rounded-lg object-cover"
+                                    fallbackClassName="h-14 w-14 flex-shrink-0 rounded-lg object-cover p-1"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate font-semibold text-gray-900">
+                                      {product.name}
+                                    </p>
+                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                                      <span className="font-semibold text-emerald-600">
+                                        ₹{product.price}
+                                      </span>
+                                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold capitalize text-emerald-800">
+                                        {product.category}
+                                      </span>
+                                      <span className="text-xs sm:text-sm">
+                                        {product.quantity} units
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <svg className="hidden sm:block w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-dashed border-emerald-200 bg-white/80 px-4 py-5 text-sm text-gray-600">
+                            No quick matches for "{searchTerm.trim()}". Try another product name or category.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -468,44 +536,44 @@ function ProductListing() {
 
           {/* Stats Cards */}
           <FadeIn delay={0.3}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-200 sm:h-11 sm:w-11">
+                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
                 </div>
-                <h3 className="text-sm font-medium text-blue-800 mb-1">Total Products</h3>
-                <p className="text-2xl font-bold text-blue-900">{products.length}</p>
+                <h3 className="mb-1 text-sm font-medium text-blue-800">Total Products</h3>
+                <p className="text-xl font-bold text-blue-900 sm:text-2xl">{products.length}</p>
                 <p className="text-xs text-blue-600 mt-1">Loaded from database</p>
               </div>
 
-              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+              <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-emerald-200 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-200 sm:h-11 sm:w-11">
+                    <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
                 </div>
-                <h3 className="text-sm font-medium text-emerald-800 mb-1">Farmer Locations</h3>
-                <p className="text-2xl font-bold text-emerald-900">{farmerGroups.length}</p>
+                <h3 className="mb-1 text-sm font-medium text-emerald-800">Farmer Locations</h3>
+                <p className="text-xl font-bold text-emerald-900 sm:text-2xl">{farmerGroups.length}</p>
                 <p className="text-xs text-emerald-600 mt-1">Available on map</p>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+              <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 sm:h-11 sm:w-11">
+                    <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                   </div>
                 </div>
-                <h3 className="text-sm font-medium text-purple-800 mb-1">Current Filter</h3>
-                <p className="text-2xl font-bold text-purple-900 capitalize">
+                <h3 className="mb-1 text-sm font-medium text-purple-800">Current Filter</h3>
+                <p className="text-xl font-bold capitalize text-purple-900 sm:text-2xl">
                   {selectedCategory === "all" ? "All" : selectedCategory}
                 </p>
                 <p className="text-xs text-purple-600 mt-1">Category focus</p>
@@ -541,21 +609,21 @@ function ProductListing() {
           )}
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
             {/* Sidebar */}
             <div className="xl:col-span-1 space-y-8">
               {/* Map Section */}
               <FadeIn delay={0.4}>
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-gray-900">Discover by Location</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">
                       {userLocation ? "Live" : "Ready"}
                     </span>
                   </div>
-                  <ProductMap
-                    apiKey={GOOGLE_MAPS_API_KEY}
+                  <FarmerMap
                     farmerGroups={farmerGroups}
+                    nearestFarmerId={nearestFarmerId}
                     onMarkerSelect={setSelectedFarmerId}
                     selectedFarmerId={selectedFarmerId}
                     userLocation={userLocation}
@@ -565,7 +633,7 @@ function ProductListing() {
 
               {/* Selected Farmer */}
               <FadeIn delay={0.5}>
-                <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-gray-900">Selected Seller</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">
@@ -578,7 +646,6 @@ function ProductListing() {
                       <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-200">
                         <h3 className="font-semibold text-gray-900 mb-2">{selectedFarmerGroup.farmerName}</h3>
                         <div className="space-y-1 text-sm text-gray-600">
-                          <p>⭐ Rating: {selectedFarmerGroup.products[0]?.farmerId?.averageRating || 0} / 5</p>
                           <p>📍 {selectedFarmerGroup.latitude}, {selectedFarmerGroup.longitude}</p>
                           {typeof selectedFarmerGroup.distanceInMeters === "number" && (
                             <p>📏 {(selectedFarmerGroup.distanceInMeters / 1000).toFixed(2)} km away</p>
@@ -589,45 +656,22 @@ function ProductListing() {
                       <div className="space-y-3 max-h-96 overflow-y-auto">
                         {selectedFarmerGroup.products.map((product) => (
                           <div key={product._id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <img
+                            <ProductImage
                               src={product.imageUrl}
                               alt={product.name}
+                              productName={product.name}
                               className="w-full h-24 object-cover rounded-lg mb-3"
+                              fallbackClassName="w-full h-24 object-cover rounded-lg mb-3 p-2"
                             />
                             <h4 className="font-semibold text-gray-900 mb-1">{product.name}</h4>
                             <p className="text-sm text-gray-600 mb-2">₹{product.price} • {product.quantity} available</p>
-                            <p className="text-xs text-gray-500 mb-3">⭐ {product.averageRating || 0} / 5</p>
-
-                            <div className="flex flex-col space-y-2">
-                              {product.farmerId?.phone && (
-                                <div className="flex space-x-2">
-                                  <a
-                                    href={getPhoneLinks(product.farmerId.phone).tel}
-                                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors text-center"
-                                  >
-                                    📞 Call
-                                  </a>
-                                  <a
-                                    href={getPhoneLinks(product.farmerId.phone).whatsapp}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors text-center"
-                                  >
-                                    💬 WhatsApp
-                                  </a>
-                                </div>
-                              )}
-                              {product.farmerId?._id && (
-                                <Link
-                                  to={`/chat?user=${product.farmerId._id}&name=${encodeURIComponent(
-                                    product.farmerId?.name || "Farmer"
-                                  )}`}
-                                  className="w-full bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors text-center inline-block"
-                                >
-                                  💬 Chat
-                                </Link>
-                              )}
-                            </div>
+                            <ContactOptions
+                              farmerId={product.farmerId?._id}
+                              farmerName={product.farmerId?.name || selectedFarmerGroup.farmerName}
+                              phone={product.farmerId?.phone}
+                              compact
+                              chatLabel="Chat"
+                            />
                           </div>
                         ))}
                       </div>
@@ -650,7 +694,7 @@ function ProductListing() {
             {/* Products Grid */}
             <div className="xl:col-span-3">
               <FadeIn delay={0.6}>
-                <div className="flex items-center justify-between mb-6">
+                <div ref={resultsSectionRef} className="flex items-center justify-between mb-6 scroll-mt-28">
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900">{filteredProducts.length} Results</h2>
                     <p className="text-gray-600">Showing products that match your current filters.</p>
@@ -677,17 +721,19 @@ function ProductListing() {
                     <p className="text-gray-600">Try adjusting your filters or search terms.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
                     {filteredProducts.map((product) => (
-                      <div key={product._id} className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                      <div key={product._id} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl transition-all duration-300 hover:shadow-2xl md:hover:scale-[1.01]">
                         <div className="aspect-w-1 aspect-h-1">
-                          <img
+                          <ProductImage
                             src={product.imageUrl}
                             alt={product.name}
+                            productName={product.name}
                             className="w-full h-48 object-cover"
+                            fallbackClassName="w-full h-48 object-cover p-4"
                           />
                         </div>
-                        <div className="p-6">
+                        <div className="p-5">
                           <div className="flex items-start justify-between mb-3">
                             <div>
                               <h3 className="text-lg font-semibold text-gray-900 mb-1">{product.name}</h3>
@@ -703,98 +749,19 @@ function ProductListing() {
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
                               <p>👨‍🌾 {product.farmerId?.name || "Unknown farmer"}</p>
-                              <p>⭐ Farmer: {product.farmerId?.averageRating || 0} / 5</p>
-                              <p>⭐ Product: {product.averageRating || 0} / 5</p>
                               <p>📦 Available: {product.quantity} units</p>
                             </div>
                           </div>
+                          <div className="mb-4">
+                            <ContactOptions
+                              farmerId={product.farmerId?._id}
+                              farmerName={product.farmerId?.name || "Farmer"}
+                              phone={product.farmerId?.phone}
+                              chatLabel="Chat with Farmer"
+                            />
+                          </div>
 
-                          {/* Contact Actions */}
-                          {product.farmerId?.phone && (
-                            <div className="flex space-x-2 mb-4">
-                              <a
-                                href={getPhoneLinks(product.farmerId.phone).tel}
-                                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors text-center"
-                              >
-                                📞 Call
-                              </a>
-                              <a
-                                href={getPhoneLinks(product.farmerId.phone).whatsapp}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors text-center"
-                              >
-                                💬 WhatsApp
-                              </a>
-                            </div>
-                          )}
-
-                          {product.farmerId?._id && (
-                            <Link
-                              to={`/chat?user=${product.farmerId._id}&name=${encodeURIComponent(
-                                product.farmerId?.name || "Farmer"
-                              )}`}
-                              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors text-center inline-block mb-4"
-                            >
-                              💬 Chat with Farmer
-                            </Link>
-                          )}
-
-                          {/* Rating Section */}
-                          {isCustomer && (
-                            <div className="space-y-3 mb-4">
-                              <div className="flex space-x-2">
-                                <select
-                                  value={ratingState[`product_${product._id}`]?.value || ""}
-                                  onChange={(event) =>
-                                    handleRatingChange(`product_${product._id}`, event.target.value)
-                                  }
-                                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                >
-                                  <option value="">Rate product</option>
-                                  {[1, 2, 3, 4, 5].map(num => (
-                                    <option key={num} value={num}>{num} ⭐</option>
-                                  ))}
-                                </select>
-                                <button
-                                  type="button"
-                                  onClick={() => submitProductRating(product._id)}
-                                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
-                                >
-                                  Rate
-                                </button>
-                              </div>
-
-                              {product.farmerId?._id && (
-                                <div className="flex space-x-2">
-                                  <select
-                                    value={ratingState[`farmer_${product.farmerId._id}`]?.value || ""}
-                                    onChange={(event) =>
-                                      handleRatingChange(
-                                        `farmer_${product.farmerId._id}`,
-                                        event.target.value
-                                      )
-                                    }
-                                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                  >
-                                    <option value="">Rate farmer</option>
-                                    {[1, 2, 3, 4, 5].map(num => (
-                                      <option key={num} value={num}>{num} ⭐</option>
-                                    ))}
-                                  </select>
-                                  <button
-                                    type="button"
-                                    onClick={() => submitFarmerRating(product.farmerId._id)}
-                                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
-                                  >
-                                    Rate
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Add to Cart / Login */}
+{/* Add to Cart / Login */}
                           {isCustomer ? (
                             <button
                               type="button"

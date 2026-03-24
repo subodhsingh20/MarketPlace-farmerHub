@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { geocodeAddress } = require("../utils/geocodeAddress");
 
 const createToken = (user) =>
   jwt.sign(
@@ -15,7 +16,17 @@ const createToken = (user) =>
 
 const registerUser = async (req, res) => {
   try {
-    const { name, email, phone, password, role, location } = req.body;
+    const { name, email, phone, password, role, location, address } = req.body;
+    let resolvedLocation = location;
+
+    if (
+      (!resolvedLocation ||
+        typeof resolvedLocation.latitude !== "number" ||
+        typeof resolvedLocation.longitude !== "number") &&
+      address
+    ) {
+      resolvedLocation = await geocodeAddress(address);
+    }
 
     if (
       !name ||
@@ -23,13 +34,13 @@ const registerUser = async (req, res) => {
       !phone ||
       !password ||
       !role ||
-      !location ||
-      typeof location.latitude !== "number" ||
-      typeof location.longitude !== "number"
+      !resolvedLocation ||
+      typeof resolvedLocation.latitude !== "number" ||
+      typeof resolvedLocation.longitude !== "number"
     ) {
       return res.status(400).json({
         message:
-          "Name, email, phone, password, role, latitude, and longitude are required.",
+          "Name, email, phone, password, role, and valid location coordinates are required.",
       });
     }
 
@@ -47,7 +58,7 @@ const registerUser = async (req, res) => {
       phone,
       password: hashedPassword,
       role,
-      location,
+      location: resolvedLocation,
     });
 
     return res.status(201).json({
@@ -65,6 +76,29 @@ const registerUser = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: "Registration failed.",
+      error: error.message,
+    });
+  }
+};
+
+const geocodeAddressLookup = async (req, res) => {
+  try {
+    const query = req.query.q || req.query.address;
+
+    if (!query) {
+      return res.status(400).json({
+        message: "An address query is required.",
+      });
+    }
+
+    const result = await geocodeAddress(query);
+
+    return res.status(200).json({
+      location: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to geocode address.",
       error: error.message,
     });
   }
@@ -111,6 +145,7 @@ const loginUser = async (req, res) => {
 };
 
 module.exports = {
+  geocodeAddressLookup,
   registerUser,
   loginUser,
 };

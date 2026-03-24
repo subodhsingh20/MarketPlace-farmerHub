@@ -15,6 +15,26 @@ const locationSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const geoPointSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point",
+      required: true,
+    },
+    coordinates: {
+      type: [Number],
+      required: true,
+      validate: {
+        validator: (value) => Array.isArray(value) && value.length === 2,
+        message: "Location coordinates must contain longitude and latitude.",
+      },
+    },
+  },
+  { _id: false }
+);
+
 const ratingSchema = new mongoose.Schema(
   {
     userId: {
@@ -65,6 +85,10 @@ const userSchema = new mongoose.Schema(
       type: locationSchema,
       required: true,
     },
+    locationPoint: {
+      type: geoPointSchema,
+      required: true,
+    },
     ratings: {
       type: [ratingSchema],
       default: [],
@@ -78,6 +102,21 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+userSchema.index({ locationPoint: "2dsphere" });
+
+userSchema.pre("validate", function syncLocationPoint() {
+  if (
+    this.location &&
+    typeof this.location.latitude === "number" &&
+    typeof this.location.longitude === "number"
+  ) {
+    this.locationPoint = {
+      type: "Point",
+      coordinates: [this.location.longitude, this.location.latitude],
+    };
+  }
+});
 
 userSchema.pre("save", async function hashPassword() {
   if (!this.isModified("password")) {

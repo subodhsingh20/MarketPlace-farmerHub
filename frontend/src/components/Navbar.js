@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { useSocket } from "../context/SocketContext";
+import { getChatConversations } from "../services/authService";
 import CartFlyout from "./CartFlyout";
 
 const guestLinks = [
@@ -15,9 +17,11 @@ function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { cartCount, isCartOpen, setIsCartOpen, cartNotice } = useCart();
+  const { socket } = useSocket();
   const cartShellRef = useRef(null);
   const isCustomer = user?.role === "customer";
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
 
   const navLinks = [
     { to: "/", label: "Home", end: true },
@@ -84,38 +88,80 @@ function Navbar() {
     setIsCartOpen((prev) => !prev);
   };
 
+  useEffect(() => {
+    if (!user) {
+      setChatUnreadCount(0);
+      return undefined;
+    }
+
+    const refreshUnreadCount = async () => {
+      try {
+        const response = await getChatConversations();
+        const unreadTotal = (response.data.conversations || []).reduce(
+          (total, conversation) => total + (conversation.unreadCount || 0),
+          0
+        );
+        setChatUnreadCount(unreadTotal);
+      } catch (_error) {
+        setChatUnreadCount(0);
+      }
+    };
+
+    refreshUnreadCount();
+
+    if (!socket) {
+      return undefined;
+    }
+
+    const handleChatRefresh = () => {
+      refreshUnreadCount();
+    };
+
+    socket.on("chatMessage", handleChatRefresh);
+    socket.on("receive_message", handleChatRefresh);
+    socket.on("messagesRead", handleChatRefresh);
+    socket.on("chatDeleted", handleChatRefresh);
+
+    return () => {
+      socket.off("chatMessage", handleChatRefresh);
+      socket.off("receive_message", handleChatRefresh);
+      socket.off("messagesRead", handleChatRefresh);
+      socket.off("chatDeleted", handleChatRefresh);
+    };
+  }, [socket, user]);
+
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-200 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 shadow-lg backdrop-blur-lg">
+        <div className="mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
+          <div className="flex h-16 items-center justify-between gap-2 lg:h-[4.5rem] lg:gap-3 xl:gap-5">
             {/* Brand */}
             <NavLink
               to="/"
-              className="flex items-center space-x-3 group transition-all duration-300 hover:scale-105"
+              className="group flex min-w-0 flex-shrink-0 items-center gap-2.5 transition-all duration-300 hover:scale-[1.01]"
             >
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <span className="text-white font-bold text-lg lg:text-xl">FM</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg transition-all duration-300 group-hover:shadow-xl lg:h-11 lg:w-11">
+                <span className="text-base font-bold text-white lg:text-lg">FM</span>
               </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg lg:text-xl font-bold text-gray-900 group-hover:text-emerald-600 transition-colors duration-300">
-                  Farmer Marketplace developed by subodh singh
+              <div className="hidden min-w-0 sm:block">
+                <h1 className="max-w-[200px] text-[0.98rem] font-bold leading-tight text-gray-900 transition-colors duration-300 group-hover:text-emerald-600 lg:max-w-[250px] lg:text-[1.06rem] xl:max-w-[320px]">
+                  Farmer Marketplace 
                 </h1>
-                <p className="text-xs lg:text-sm text-gray-600 group-hover:text-emerald-500 transition-colors duration-300">
+                <p className="mt-0.5 text-[0.78rem] text-gray-600 transition-colors duration-300 group-hover:text-emerald-500 lg:text-[0.84rem]">
                   Fresh produce, nearby farmers
                 </p>
               </div>
             </NavLink>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-10">
+            <div className="hidden flex-1 items-center justify-center gap-0.5 px-2 lg:flex xl:gap-1 xl:px-4">
               {links.map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}
                   end={link.end}
                   className={({ isActive }) =>
-                    `px-5 py-2 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
+                    `relative rounded-xl px-3 py-2 text-[0.94rem] font-semibold transition-all duration-300 hover:scale-[1.01] xl:px-3.5 ${
                       isActive
                         ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-xl"
                         : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
@@ -123,19 +169,26 @@ function Navbar() {
                   }
                 >
                   {link.label}
+                  {link.to === "/chat" && chatUnreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[0.68rem] font-bold text-white shadow-lg">
+                      {chatUnreadCount}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </div>
 
             {/* User Actions */}
-            <div className="flex items-center space-x-6">
+            <div className="flex flex-shrink-0 items-center gap-2 lg:gap-2.5">
               {/* User Info */}
               {user && (
-                <div className="hidden md:flex items-center space-x-3">
-                  <span className="px-3 py-1 bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 text-sm font-semibold rounded-full capitalize">
+                <div className="hidden items-center gap-2 rounded-2xl border border-emerald-100 bg-white/80 px-3 py-2 shadow-sm lg:flex">
+                  <span className="rounded-full bg-gradient-to-r from-emerald-100 to-green-100 px-3 py-1 text-[0.84rem] font-semibold capitalize text-emerald-800">
                     {user.role}
                   </span>
-                  <span className="text-gray-700 font-medium">{user.name}</span>
+                  <span className="hidden max-w-[110px] truncate text-[0.92rem] font-semibold text-gray-700 xl:inline">
+                    {user.name}
+                  </span>
                 </div>
               )}
 
@@ -145,18 +198,18 @@ function Navbar() {
                   <button
                     type="button"
                     onClick={handleCartClick}
-                    className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 ${
+                    className={`relative flex items-center gap-2 rounded-xl px-3 py-2 font-semibold transition-all duration-300 hover:scale-[1.01] xl:px-3.5 ${
                       isCartOpen
                         ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg"
                         : "bg-gray-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-600"
                     }`}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
-                    <span>Cart</span>
+                    <span className="hidden xl:inline text-[0.94rem]">Cart</span>
                     {cartCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
+                      <span className="absolute -right-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[0.7rem] font-bold text-white shadow-lg">
                         {cartCount}
                       </span>
                     )}
@@ -170,19 +223,19 @@ function Navbar() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="hidden md:flex items-center space-x-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
+                  className="hidden items-center gap-2 rounded-xl bg-red-50 px-3 py-2 font-semibold text-red-600 transition-all duration-300 hover:scale-[1.01] hover:bg-red-100 hover:text-red-700 md:flex xl:px-3.5"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  <span>Logout</span>
+                  <span className="hidden text-[0.94rem] xl:inline">Logout</span>
                 </button>
               )}
 
               {/* Mobile Menu Button */}
               <button
                 type="button"
-                className="lg:hidden flex flex-col space-y-1 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-300"
+                className="flex flex-col space-y-1 rounded-lg p-2 transition-colors duration-300 hover:bg-gray-100 lg:hidden"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 aria-label="Toggle menu"
               >
@@ -194,8 +247,8 @@ function Navbar() {
           </div>
 
           {/* Mobile Menu */}
-          <div className={`lg:hidden overflow-hidden transition-all duration-300 ${isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-            <div className="py-4 space-y-2 border-t border-gray-200">
+          <div className={`lg:hidden overflow-hidden transition-all duration-300 ${isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="space-y-2 border-t border-gray-200 py-3">
               {links.map((link) => (
                 <NavLink
                   key={link.to}
@@ -203,25 +256,32 @@ function Navbar() {
                   end={link.end}
                   onClick={() => setIsMenuOpen(false)}
                   className={({ isActive }) =>
-                    `block px-4 py-3 rounded-lg font-semibold transition-all duration-300 ${
+                    `block rounded-xl px-4 py-3 text-[0.98rem] font-semibold transition-all duration-300 ${
                       isActive
                         ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg"
                         : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
                     }`
                   }
                 >
-                  {link.label}
+                  <span className="relative inline-flex items-center">
+                    {link.label}
+                    {link.to === "/chat" && chatUnreadCount > 0 && (
+                      <span className="ml-2 inline-flex min-h-[1.35rem] min-w-[1.35rem] items-center justify-center rounded-full bg-red-500 px-1 text-[0.68rem] font-bold text-white shadow-lg">
+                        {chatUnreadCount}
+                      </span>
+                    )}
+                  </span>
                 </NavLink>
               ))}
 
               {/* Mobile User Actions */}
               {user && (
-                <div className="px-4 py-2 space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <span className="px-3 py-1 bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 text-sm font-semibold rounded-full capitalize">
+                <div className="space-y-3 px-4 py-2">
+                  <div className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/40 px-3 py-3">
+                    <span className="rounded-full bg-gradient-to-r from-emerald-100 to-green-100 px-3 py-1 text-[0.84rem] font-semibold capitalize text-emerald-800">
                       {user.role}
                     </span>
-                    <span className="text-gray-700 font-medium">{user.name}</span>
+                    <span className="min-w-0 truncate text-[0.94rem] font-medium text-gray-700">{user.name}</span>
                   </div>
                   <button
                     type="button"
@@ -229,7 +289,7 @@ function Navbar() {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg font-semibold transition-all duration-300"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-3 font-semibold text-red-600 transition-all duration-300 hover:bg-red-100 hover:text-red-700"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

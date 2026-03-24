@@ -58,6 +58,21 @@ const orderSchema = new mongoose.Schema(
       default: "created",
       required: true,
     },
+    paymentProvider: {
+      type: String,
+      trim: true,
+      default: "mock",
+    },
+    paymentMode: {
+      type: String,
+      enum: ["test", "live"],
+      default: "test",
+      required: true,
+    },
+    paymentReference: {
+      type: String,
+      trim: true,
+    },
     razorpayOrderId: {
       type: String,
       trim: true,
