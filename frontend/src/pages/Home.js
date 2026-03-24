@@ -37,41 +37,41 @@ function Home() {
 
   if (user?.role === "farmer") {
     return (
-      <section className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-50 flex items-center justify-center px-6 py-12">
-        <div className="max-w-7xl mx-auto w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-center">
+      <section className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 to-green-50 px-4 py-8 sm:px-6">
+        <div className="responsive-shell w-full">
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)] lg:gap-10 xl:gap-14">
             {/* Left: Content */}
-            <div className="space-y-8">
+            <div className="space-y-6 lg:max-w-[40rem]">
               <div>
-                <span className="inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full mb-6">Farmer workspace</span>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">Manage your store, stock, and order flow.</h1>
-                <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
+                <span className="responsive-chip mb-5 inline-block bg-emerald-100 text-emerald-800">Farmer workspace</span>
+                <h1 className="responsive-title mb-5 font-bold">Manage your store, stock, and order flow.</h1>
+                <p className="responsive-copy max-w-xl">
                   This side of the platform is focused on your business operations:
                   list products, monitor live orders, track earnings, and keep your
                   catalog ready for buyers.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/farmer-dashboard" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 w-full sm:w-auto text-center">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:gap-4">
+                <Link to="/farmer-dashboard" className="responsive-cta inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-6 text-center text-base font-bold text-white transition-all duration-300 hover:bg-emerald-700 sm:min-w-[15rem] sm:flex-1 lg:flex-none">
                   Open Farmer Dashboard
                 </Link>
-                <Link to="/products" className="border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 w-full sm:w-auto text-center">
+                <Link to="/products" className="responsive-cta inline-flex w-full items-center justify-center rounded-xl border-2 border-emerald-600 px-6 text-center text-base font-bold text-emerald-600 transition-all duration-300 hover:bg-emerald-50 sm:min-w-[13rem] sm:flex-1 lg:flex-none">
                   View My products
                 </Link>
               </div>
             </div>
             {/* Right: Image */}
-            <div className="flex justify-center">
+            <div className="flex justify-center lg:justify-end">
               <a
                 href="https://unsplash.com/photos/farmer-handful-of-harvested-wheat-kernels-from-the-heap-loaded-into-tractor-trailer-mMmIC32vdxQ"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full max-w-md lg:max-w-lg"
+                className="block w-full max-w-xl lg:max-w-[34rem] xl:max-w-[38rem]"
               >
                 <img
                   src="https://plus.unsplash.com/premium_photo-1661930182051-06673fc544f9?auto=format&fit=crop&w=1974&q=80&crop=entropy&cs=srgb&fm=jpg&ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzczOTMxMzE1fA&ixlib=rb-4.1.0"
                   alt="Farmer handful of harvested wheat kernels"
-                  className="w-full h-80 lg:h-96 object-cover rounded-2xl shadow-2xl"
+                  className="h-72 w-full rounded-[1.75rem] object-cover object-center shadow-2xl sm:h-80 lg:h-[22rem] xl:h-[25rem]"
                 />
               </a>
             </div>
@@ -83,44 +83,47 @@ function Home() {
 
   if (user?.role === "customer") {
     return (
-      <section className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center px-6 py-12">
-        <div className="max-w-7xl mx-auto w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-center">
+      <section className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-8 sm:px-6">
+        <div className="responsive-shell w-full">
+          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)] lg:gap-10 xl:gap-14">
             {/* Left: Content */}
-            <div className="space-y-8">
+            <div className="space-y-6 lg:max-w-[40rem]">
               <div>
-                <span className="inline-block px-4 py-2 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full mb-6">Customer marketplace</span>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">Discover nearby produce and order with confidence.</h1>
-                <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
+                <span className="responsive-chip mb-5 inline-block bg-blue-100 text-blue-800">Customer marketplace</span>
+                <h1 className="responsive-title mb-5 font-bold">Discover nearby produce and order with confidence.</h1>
+                <p className="responsive-copy max-w-xl">
                   Your customer view is centered on browsing products, comparing
                   sellers, adding to cart, tracking orders, and staying connected
                   with farmers.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/products" className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 w-full sm:w-auto text-center">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:gap-4">
+                <Link to="/products" className="responsive-cta inline-flex w-full items-center justify-center rounded-xl bg-green-600 px-6 text-center text-base font-bold text-white transition-all duration-300 hover:bg-green-700 sm:min-w-[14rem] sm:flex-1 lg:flex-none">
                   Explore Marketplace
                 </Link>
-                <Link to="/customer-dashboard" className="border-2 border-green-600 text-green-600 hover:bg-blue-50 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 w-full sm:w-auto text-center">
+                <Link to="/customer-dashboard" className="responsive-cta inline-flex w-full items-center justify-center rounded-xl border-2 border-green-600 px-6 text-center text-base font-bold text-green-600 transition-all duration-300 hover:bg-blue-50 sm:min-w-[16rem] sm:flex-1 lg:flex-none">
                   Open Customer Dashboard
                 </Link>
               </div>
             </div>
             {/* Right: Image */}
-            <div className="flex justify-center">
-              <a
-                href="https://unsplash.com/photos/young-indian-farmer-standing-in-cotton-agriculture-field-NajxUaCK7XQ"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full max-w-md lg:max-w-lg"
-              >
-                <img
-                  src="https://plus.unsplash.com/premium_photo-1682092034268-645322c1d308?auto=format&fit=crop&q=60&crop=entropy&cs=srgb&fm=jpg&ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzczOTMxOTk3fA&ixlib=rb-4.1.0"
-                  alt="Fresh market produce shopping"
-                  className="w-full h-80 lg:h-96 object-cover rounded-2xl shadow-2xl"
-                />
-              </a>
-            </div>
+              <div className="flex justify-center lg:justify-end">
+                <a
+                  href="https://unsplash.com/photos/young-indian-farmer-standing-in-cotton-agriculture-field-NajxUaCK7XQ"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full max-w-xl lg:max-w-[34rem] xl:max-w-[38rem]"
+                >
+                  <img
+                    src="https://plus.unsplash.com/premium_photo-1682092034268-645322c1d308?auto=format&fit=crop&q=60&crop=entropy&cs=srgb&fm=jpg&ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzczOTMxOTk3fA&ixlib=rb-4.1.0"
+                    alt="Fresh market produce shopping"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                    className="h-72 w-full rounded-[1.75rem] object-cover object-center shadow-2xl sm:h-80 lg:h-[22rem] xl:h-[25rem]"
+                  />
+                </a>
+              </div>
           </div>
         </div>
       </section>
@@ -198,68 +201,152 @@ function Home() {
 
       {/* Categories Section */}
       <FadeIn>
-        <section className="my-16 bg-gradient-to-b from-white to-gray-50">
+        <section className="my-16 bg-gradient-to-b from-[#f9fcf8] via-white to-[#eef7f0] py-8 lg:py-14">
           <div className="max-w-7xl mx-auto px-6">
             <FadeIn delay={0.1}>
-              <div className="text-center mb-12 lg:mb-20">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 lg:mb-6">
+              <div className="text-center mb-12 lg:mb-16">
+                <span className="mb-4 inline-flex rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700 shadow-sm">
+                  Fresh Picks
+                </span>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 lg:mb-5">
                   Shop by Category
                 </h2>
-                <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                  Discover fresh produce across our carefully curated categories
+                <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                  Browse produce through bold category lanes that are easy to spot, easy to tap, and fast to shop.
                 </p>
               </div>
             </FadeIn>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 xl:gap-12">
-              <FadeIn delay={0.2}>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+              <FadeIn delay={0.2} className="w-full">
                 <Link
                   to="/products?category=vegetable"
-                  className="group relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 xl:p-12 2xl:p-16 text-center text-white hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] lg:hover:scale-105"
+                  className="group relative block min-h-[22rem] overflow-hidden rounded-[2rem] border border-emerald-200 bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-700 p-7 text-left text-white shadow-[0_24px_60px_rgba(21,128,61,0.18)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_70px_rgba(21,128,61,0.26)] sm:p-8 lg:min-h-[24rem] lg:p-10"
                 >
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
-                  <div className="relative z-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 2xl:w-32 2xl:h-32 bg-white/20 backdrop-blur-sm rounded-full mb-4 lg:mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 2xl:w-16 2xl:h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                      </svg>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.24),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.12))]" />
+                  <div className="absolute -right-12 bottom-0 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
+                  <div className="relative z-10 flex h-full flex-col">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/18 backdrop-blur-md transition-transform duration-300 group-hover:scale-110">
+                        <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20h10M12 4C9.239 4 7 6.239 7 9c0 1.837.993 3.441 2.469 4.309.343.202.531.587.531.985V16h4v-1.706c0-.398.188-.783.531-.985C16.007 12.441 17 10.837 17 9c0-2.761-2.239-5-5-5z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 16h6" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20h4" />
+                        </svg>
+                      </div>
+                      <span className="rounded-full border border-white/20 bg-white/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-50">
+                        Seasonal
+                      </span>
                     </div>
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold mb-2 lg:mb-3 group-hover:scale-105 transition-transform duration-300">Vegetables</h3>
-                    <p className="text-emerald-100 text-base sm:text-lg lg:text-xl xl:text-2xl leading-relaxed mb-4 lg:mb-6">Fresh seasonal vegetables from local farms</p>
-                    <div className="inline-flex items-center text-sm lg:text-base xl:text-lg font-semibold group-hover:translate-x-2 transition-transform duration-300">
-                      Explore Vegetables
-                      <svg className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+
+                    <div className="mt-8">
+                      <h3 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.8rem]">
+                        Vegetables
+                      </h3>
+                      <p className="mt-3 max-w-md text-base leading-7 text-emerald-50/90 sm:text-lg">
+                        Crisp greens, roots, and everyday staples sourced directly from nearby farms.
+                      </p>
+                    </div>
+
+                    <div className="mt-8 grid max-w-md grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                        <p className="text-xs uppercase tracking-[0.14em] text-emerald-100">Popular</p>
+                        <p className="mt-1 text-sm font-semibold text-white">Tomato, Onion, Spinach</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                        <p className="text-xs uppercase tracking-[0.14em] text-emerald-100">Best For</p>
+                        <p className="mt-1 text-sm font-semibold text-white">Daily kitchen essentials</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-8">
+                      <div className="inline-flex items-center text-base font-semibold text-white transition-transform duration-300 group-hover:translate-x-2">
+                        Explore Vegetables
+                        <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </Link>
               </FadeIn>
 
-              <FadeIn delay={0.3}>
+              <FadeIn delay={0.3} className="w-full">
                 <Link
                   to="/products?category=pulses"
-                  className="group relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 xl:p-12 2xl:p-16 text-center text-white hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] lg:hover:scale-105"
+                  className="group relative block min-h-[22rem] overflow-hidden rounded-[2rem] border border-amber-200 bg-gradient-to-br from-amber-500 via-orange-500 to-amber-700 p-7 text-left text-white shadow-[0_24px_60px_rgba(217,119,6,0.18)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_70px_rgba(217,119,6,0.24)] sm:p-8 lg:min-h-[24rem] lg:p-10"
                 >
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300"></div>
-                  <div className="relative z-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 2xl:w-32 2xl:h-32 bg-white/20 backdrop-blur-sm rounded-full mb-4 lg:mb-6 group-hover:scale-110 transition-transform duration-300">
-                      <svg className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 2xl:w-16 2xl:h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.12))]" />
+                  <div className="absolute -left-10 bottom-2 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+                  <div className="relative z-10 flex h-full flex-col">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/18 backdrop-blur-md transition-transform duration-300 group-hover:scale-110">
+                        <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8c0-1.657 2.239-3 5-3s5 1.343 5 3-2.239 3-5 3-5-1.343-5-3z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8v4c0 1.657 2.239 3 5 3s5-1.343 5-3V8" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12v4c0 1.657 2.239 3 5 3s5-1.343 5-3v-4" />
+                        </svg>
+                      </div>
+                      <span className="rounded-full border border-white/20 bg-white/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-50">
+                        Pantry
+                      </span>
                     </div>
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-bold mb-2 lg:mb-3 group-hover:scale-105 transition-transform duration-300">Pulses</h3>
-                    <p className="text-orange-100 text-base sm:text-lg lg:text-xl xl:text-2xl leading-relaxed mb-4 lg:mb-6">High-quality pulses and legumes</p>
-                    <div className="inline-flex items-center text-sm lg:text-base xl:text-lg font-semibold group-hover:translate-x-2 transition-transform duration-300">
-                      Explore Pulses
-                      <svg className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+
+                    <div className="mt-8">
+                      <h3 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.8rem]">
+                        Pulses
+                      </h3>
+                      <p className="mt-3 max-w-md text-base leading-7 text-orange-50/90 sm:text-lg">
+                        Protein-rich lentils and legumes grouped for pantry planning and bulk buys.
+                      </p>
+                    </div>
+
+                    <div className="mt-8 grid max-w-md grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                        <p className="text-xs uppercase tracking-[0.14em] text-orange-100">Popular</p>
+                        <p className="mt-1 text-sm font-semibold text-white">Moong, Masoor, Chana</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                        <p className="text-xs uppercase tracking-[0.14em] text-orange-100">Best For</p>
+                        <p className="mt-1 text-sm font-semibold text-white">Monthly pantry restocks</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-8">
+                      <div className="inline-flex items-center text-base font-semibold text-white transition-transform duration-300 group-hover:translate-x-2">
+                        Explore Pulses
+                        <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </Link>
               </FadeIn>
             </div>
+
+            <FadeIn delay={0.35}>
+              <div className="mt-8 grid gap-4 rounded-[2rem] border border-emerald-100 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,24,40,0.06)] sm:grid-cols-3 sm:p-6">
+                <div className="rounded-2xl bg-emerald-50 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">Fast Filter</p>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Jump straight into the aisle you need instead of browsing every listing.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-amber-50 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-amber-700">Fresh Supply</p>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Seasonal produce and pantry staples stay clearly grouped for faster comparison.
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-sky-50 px-4 py-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-700">Direct Access</p>
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    Open a category and connect with nearby farmers without extra clicks.
+                  </p>
+                </div>
+              </div>
+            </FadeIn>
           </div>
         </section>
       </FadeIn>
@@ -585,84 +672,6 @@ function Home() {
         </section>
       </FadeIn>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-2">
-              <div className="flex items-center mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                </div>
-                <span className="text-2xl font-bold">FarmConnect</span>
-              </div>
-              <p className="text-gray-400 mb-6 leading-relaxed">
-                Connecting farmers and consumers for fresh, local produce. Supporting sustainable agriculture and fair trade practices.
-              </p>
-              <div className="flex space-x-4">
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                  </svg>
-                </a>
-                <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
-                  </svg>
-                </a>
-                <a
-                  href="https://www.linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                  </svg>
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li><Link to="/products" className="text-gray-400 hover:text-white transition-colors">Browse Products</Link></li>
-                <li><Link to="/register" className="text-gray-400 hover:text-white transition-colors">Become a Seller</Link></li>
-                <li><Link to="/#how-it-works" className="text-gray-400 hover:text-white transition-colors">How It Works</Link></li>
-                <li><Link to="/products" className="text-gray-400 hover:text-white transition-colors">Pricing</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Support</h3>
-              <ul className="space-y-2">
-                <li><Link to="/help" className="text-gray-400 hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link></li>
-                <li><Link to="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="text-gray-400 hover:text-white transition-colors">Terms of Service</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center">
-            <p className="text-gray-400">
-              © 2024 FarmConnect. All rights reserved. Connecting farmers and consumers for a sustainable future.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -4,6 +4,8 @@ const Product = require("../models/Product");
 const { emitOrderAlert } = require("../socket");
 const { getIo } = require("../socketInstance");
 
+const DEFAULT_PAYMENT_MODE = process.env.PAYMENT_MODE === "live" ? "live" : "test";
+
 const mergeRequestedProducts = (products) => {
   const mergedProducts = new Map();
 
@@ -71,8 +73,90 @@ const getValidatedOrderData = async (products, fulfillmentType) => {
   return { normalizedProducts, totalPrice };
 };
 
+const emitPaidOrderAlert = async (order, userId, message) => {
+  const populatedOrder = await Order.findById(order._id)
+    .populate("userId", "name email phone role")
+    .populate("products.productId", "name imageUrl category farmerId");
+
+  const farmerIds = [
+    ...new Set(
+      populatedOrder.products
+        .map((item) => item.productId?.farmerId)
+        .filter(Boolean)
+        .map((farmerId) => String(farmerId))
+    ),
+  ];
+
+  emitOrderAlert(getIo(), {
+    type: "order_paid",
+    orderId: populatedOrder._id,
+    customerId: userId,
+    farmerIds,
+    message,
+    status: populatedOrder.status,
+  });
+
+  return populatedOrder;
+};
+
+const finalizeOrderPayment = async ({
+  order,
+  paymentReference,
+  paymentProvider,
+  paymentMode,
+  successMessage,
+}) => {
+  if (order.paymentStatus === "paid") {
+    return {
+      alreadyPaid: true,
+      order: await emitPaidOrderAlert(order, order.userId, successMessage),
+    };
+  }
+
+  for (const item of order.products) {
+    const product = await Product.findById(item.productId);
+
+    if (!product || product.quantity < item.quantity) {
+      order.paymentStatus = "failed";
+      await order.save();
+
+      throw new Error("Product stock changed before payment confirmation.");
+    }
+  }
+
+  for (const item of order.products) {
+    await Product.findByIdAndUpdate(item.productId, {
+      $inc: { quantity: -item.quantity },
+    });
+  }
+
+  order.paymentStatus = "paid";
+  order.status = "pending";
+  order.paymentReference = paymentReference;
+  order.paymentProvider = paymentProvider;
+  order.paymentMode = paymentMode;
+
+  if (paymentProvider === "razorpay") {
+    order.razorpayPaymentId = paymentReference;
+  }
+
+  await order.save();
+
+  return {
+    alreadyPaid: false,
+    order: await emitPaidOrderAlert(order, order.userId, successMessage),
+  };
+};
+
 const createPaymentOrder = async (req, res) => {
   try {
+    if (DEFAULT_PAYMENT_MODE !== "live") {
+      return res.status(400).json({
+        message:
+          "Live gateway is disabled. Set PAYMENT_MODE=live or use /api/payment/mock in test mode.",
+      });
+    }
+
     const { products, fulfillmentType } = req.body;
     const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
     const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -125,11 +209,15 @@ const createPaymentOrder = async (req, res) => {
       totalPrice,
       fulfillmentType,
       paymentStatus: "created",
+      paymentProvider: "razorpay",
+      paymentMode: "live",
       razorpayOrderId: razorpayOrder.id,
     });
 
     return res.status(201).json({
       message: "Payment order created successfully.",
+      gateway: "razorpay",
+      mode: "live",
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
@@ -186,62 +274,19 @@ const verifyPayment = async (req, res) => {
       return res.status(404).json({ message: "Pending order not found." });
     }
 
-    if (order.paymentStatus === "paid") {
-      return res.status(200).json({
-        message: "Payment already verified.",
-        order,
-      });
-    }
-
-    for (const item of order.products) {
-      const product = await Product.findById(item.productId);
-
-      if (!product || product.quantity < item.quantity) {
-        order.paymentStatus = "failed";
-        await order.save();
-
-        return res.status(400).json({
-          message: "Product stock changed before payment verification.",
-        });
-      }
-    }
-
-    for (const item of order.products) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { quantity: -item.quantity },
-      });
-    }
-
-    order.paymentStatus = "paid";
-    order.status = "confirmed";
-    order.razorpayPaymentId = razorpayPaymentId;
-    await order.save();
-
-    const populatedOrder = await Order.findById(order._id)
-      .populate("userId", "name email phone role")
-      .populate("products.productId", "name imageUrl category farmerId");
-
-    const farmerIds = [
-      ...new Set(
-        populatedOrder.products
-          .map((item) => item.productId?.farmerId)
-          .filter(Boolean)
-          .map((farmerId) => String(farmerId))
-      ),
-    ];
-
-    emitOrderAlert(getIo(), {
-      type: "order_paid",
-      orderId: populatedOrder._id,
-      customerId: populatedOrder.userId?._id,
-      farmerIds,
-      message: "Payment verified and order confirmed.",
-      status: populatedOrder.status,
+    const result = await finalizeOrderPayment({
+      order,
+      paymentReference: razorpayPaymentId,
+      paymentProvider: "razorpay",
+      paymentMode: "live",
+      successMessage: "Payment verified and awaiting farmer confirmation.",
     });
 
     return res.status(200).json({
-      message: "Payment verified successfully.",
-      order: populatedOrder,
+      message: result.alreadyPaid
+        ? "Payment already verified."
+        : "Payment verified successfully.",
+      order: result.order,
     });
   } catch (error) {
     return res.status(500).json({
@@ -251,7 +296,50 @@ const verifyPayment = async (req, res) => {
   }
 };
 
+const mockPayment = async (req, res) => {
+  try {
+    const { products, fulfillmentType } = req.body;
+    const { normalizedProducts, totalPrice } = await getValidatedOrderData(
+      products,
+      fulfillmentType
+    );
+
+    const transactionId = String(Date.now());
+
+    const order = await Order.create({
+      userId: req.user._id,
+      products: normalizedProducts,
+      totalPrice,
+      fulfillmentType,
+      paymentStatus: "created",
+      paymentProvider: "mock",
+      paymentMode: "test",
+    });
+
+    const result = await finalizeOrderPayment({
+      order,
+      paymentReference: transactionId,
+      paymentProvider: "mock",
+      paymentMode: "test",
+      successMessage: "Payment successful in test mode and awaiting farmer confirmation.",
+    });
+
+    return res.status(200).json({
+      status: "success",
+      transactionId: Number(transactionId),
+      mode: "test",
+      order: result.order,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: "Mock payment failed.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createPaymentOrder,
+  mockPayment,
   verifyPayment,
 };

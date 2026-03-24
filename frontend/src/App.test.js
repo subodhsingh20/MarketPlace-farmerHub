@@ -1,23 +1,36 @@
 jest.mock(
   "react-router-dom",
-  () => ({
-    BrowserRouter: ({ children }) => children,
-    Navigate: () => null,
-    Route: ({ element }) => element,
-    Routes: ({ children }) => children,
-    NavLink: ({ children, to, ...rest }) => (
-      <a href={to} {...rest}>
-        {children}
-      </a>
-    ),
-    Link: ({ children, to, ...rest }) => (
-      <a href={to} {...rest}>
-        {children}
-      </a>
-    ),
-    useNavigate: () => jest.fn(),
-    useLocation: () => ({ search: "", hash: "", pathname: "/" }),
-  }),
+  () => {
+    const React = require("react");
+
+    const resolveClassName = (className, to) =>
+      typeof className === "function" ? className({ isActive: to === "/" }) : className;
+
+    return {
+      BrowserRouter: ({ children }) => children,
+      Navigate: () => null,
+      Route: ({ element, path }) => <route data-path={path} element={element} />,
+      Routes: ({ children }) => {
+        const routes = React.Children.toArray(children);
+        const matchedRoute =
+          routes.find((child) => child.props["data-path"] === "/") ?? routes[0];
+
+        return matchedRoute?.props.element ?? null;
+      },
+      NavLink: ({ children, to, className, end, ...rest }) => (
+        <a href={to} className={resolveClassName(className, to)} {...rest}>
+          {children}
+        </a>
+      ),
+      Link: ({ children, to, className, ...rest }) => (
+        <a href={to} className={className} {...rest}>
+          {children}
+        </a>
+      ),
+      useNavigate: () => jest.fn(),
+      useLocation: () => ({ search: "", hash: "", pathname: "/" }),
+    };
+  },
   { virtual: true }
 );
 
@@ -48,11 +61,27 @@ jest.mock(
   { virtual: true }
 );
 
+jest.mock("./services/authService", () => {
+  const actual = jest.requireActual("./services/authService");
+
+  return {
+    ...actual,
+    getAllProducts: jest.fn().mockResolvedValue({
+      data: {
+        products: [],
+      },
+    }),
+    setAuthToken: jest.fn(),
+  };
+});
+
+jest.mock("./pages/Home", () => () => <div>Home page</div>);
+
 import { render, screen } from "@testing-library/react";
 import App from "./App";
 
 test("renders navbar brand", () => {
   render(<App />);
-  expect(screen.getByText(/farmer marketplace/i)).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /login/i })).toBeInTheDocument();
+  expect(screen.getAllByText(/farmer marketplace/i).length).toBeGreaterThan(0);
+  expect(screen.getAllByRole("link", { name: /login/i }).length).toBeGreaterThan(0);
 });

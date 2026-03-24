@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import FadeIn from "../components/FadeIn";
+import ProductImage, { normalizeImageUrl } from "../components/ProductImage";
 import {
   addProduct,
+  getChatConversations,
   getFarmerAnalytics,
   deleteProduct,
   getFarmerOrders,
@@ -28,6 +31,7 @@ function FarmerDashboard() {
   const farmerId = user?.id || user?._id;
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [analytics, setAnalytics] = useState({
     totalEarnings: 0,
     completedEarnings: 0,
@@ -38,7 +42,6 @@ function FarmerDashboard() {
     totalOrders: 0,
     recentEarnings: [],
   });
-  const [alerts, setAlerts] = useState([]);
   const [formData, setFormData] = useState(initialFormState);
   const [editingProductId, setEditingProductId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +49,20 @@ function FarmerDashboard() {
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const editFormRef = useRef(null);
+
+  const activeOrders = orders.filter(
+    (order) => !["completed", "cancelled"].includes(order.status)
+  );
+  const orderHistory = orders.filter((order) =>
+    ["completed", "cancelled"].includes(order.status)
+  );
+
+  const getOrderEarning = (order) =>
+    (order.products || []).reduce(
+      (total, item) => total + Number(item.price || 0) * Number(item.quantity || 0),
+      0
+    );
 
   useEffect(() => {
     if (!farmerId) {
@@ -64,6 +81,9 @@ function FarmerDashboard() {
         setProducts(productsResponse.data.products || []);
         setOrders(ordersResponse.data.orders || []);
         setAnalytics(analyticsResponse.data.analytics || {});
+
+        const chatResponse = await getChatConversations();
+        setConversations(chatResponse.data.conversations || []);
       } catch (requestError) {
         setError(
           requestError.response?.data?.message || "Failed to load your dashboard."
@@ -82,23 +102,44 @@ function FarmerDashboard() {
     }
 
     const handleOrderAlert = (alert) => {
-      setAlerts((current) => [alert, ...current].slice(0, 6));
       if (farmerId) {
-        Promise.all([getFarmerOrders(), getFarmerAnalytics()])
-          .then(([ordersResponse, analyticsResponse]) => {
+        Promise.all([getFarmerOrders(), getFarmerAnalytics(), getChatConversations()])
+          .then(([ordersResponse, analyticsResponse, chatResponse]) => {
             setOrders(ordersResponse.data.orders || []);
             setAnalytics(analyticsResponse.data.analytics || {});
+            setConversations(chatResponse.data.conversations || []);
           })
           .catch(() => {});
       }
     };
 
+    const handleChatAlert = (alert) => {
+      getChatConversations()
+        .then((response) => {
+          setConversations(response.data.conversations || []);
+        })
+        .catch(() => {});
+    };
+
     socket.on("order_alert", handleOrderAlert);
+    socket.on("chat_message", handleChatAlert);
 
     return () => {
       socket.off("order_alert", handleOrderAlert);
+      socket.off("chat_message", handleChatAlert);
     };
   }, [farmerId, socket]);
+
+  useEffect(() => {
+    if (!editingProductId || !editFormRef.current) {
+      return;
+    }
+
+    editFormRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [editingProductId]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -166,7 +207,7 @@ function FarmerDashboard() {
       price: Number(formData.price),
       quantity: Number(formData.quantity),
       category: formData.category,
-      imageUrl: formData.imageUrl,
+      imageUrl: normalizeImageUrl(formData.imageUrl),
       location: {
         latitude: Number(formData.latitude),
         longitude: Number(formData.longitude),
@@ -221,6 +262,13 @@ function FarmerDashboard() {
       );
       const analyticsResponse = await getFarmerAnalytics();
       setAnalytics(analyticsResponse.data.analytics || {});
+      setSuccessMessage(
+        status === "completed"
+          ? "Order completed and saved in order history."
+          : status === "cancelled"
+            ? "Order cancelled and saved in order history."
+            : "Order status updated successfully."
+      );
     } catch (requestError) {
       setError(
         requestError.response?.data?.message || "Failed to update order status."
@@ -231,22 +279,22 @@ function FarmerDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
       <FadeIn>
-        <div className="max-w-7xl mx-auto px-4 py-8 lg:px-8">
+        <div className="responsive-shell">
           {/* Hero Section */}
           <FadeIn delay={0.1}>
-            <div className="bg-white rounded-2xl lg:rounded-3xl p-8 lg:p-12 mb-8 shadow-2xl border border-gray-100">
+            <div className="responsive-card mb-6 border border-gray-100 bg-white shadow-2xl">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
                 <div className="lg:col-span-2">
-                  <span className="inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full mb-6">Farmer Dashboard</span>
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                  <span className="responsive-chip mb-5 inline-block bg-emerald-100 text-emerald-800">Farmer Dashboard</span>
+                  <h1 className="responsive-title mb-5 font-bold">
                     Run your storefront with more clarity.
                   </h1>
-                  <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
+                  <p className="responsive-copy max-w-2xl">
                     Welcome {user?.name}. Manage listings, follow order flow, and keep your inventory and earnings in one place.
                   </p>
                 </div>
 
-                <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-8 text-white">
+                <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 p-6 text-white">
                   <h3 className="text-lg font-semibold mb-6">At a Glance</h3>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -267,103 +315,155 @@ function FarmerDashboard() {
             </div>
           </FadeIn>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             {/* Main Content */}
             <div className="xl:col-span-2 space-y-8">
               {/* Analytics Cards */}
               <FadeIn delay={0.2}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-200 sm:h-11 sm:w-11">
+                        <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                         </svg>
                       </div>
                     </div>
-                    <h3 className="text-sm font-medium text-blue-800 mb-1">Total Earnings</h3>
-                    <p className="text-2xl font-bold text-blue-900">₹{analytics.totalEarnings || 0}</p>
+                    <h3 className="mb-1 text-sm font-medium text-blue-800">Total Earnings</h3>
+                    <p className="text-xl font-bold text-blue-900 sm:text-2xl">₹{analytics.totalEarnings || 0}</p>
                     <p className="text-xs text-blue-600 mt-1">All paid orders combined</p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                  <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 sm:p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-emerald-200 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-200 sm:h-11 sm:w-11">
+                        <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
                     </div>
-                    <h3 className="text-sm font-medium text-emerald-800 mb-1">Completed Revenue</h3>
-                    <p className="text-2xl font-bold text-emerald-900">₹{analytics.completedEarnings || 0}</p>
+                    <h3 className="mb-1 text-sm font-medium text-emerald-800">Completed Revenue</h3>
+                    <p className="text-xl font-bold text-emerald-900 sm:text-2xl">₹{analytics.completedEarnings || 0}</p>
                     <p className="text-xs text-emerald-600 mt-1">Revenue from completed orders</p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+                  <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4 sm:p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-purple-200 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-200 sm:h-11 sm:w-11">
+                        <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
                       </div>
                     </div>
-                    <h3 className="text-sm font-medium text-purple-800 mb-1">Items Sold</h3>
-                    <p className="text-2xl font-bold text-purple-900">{analytics.totalItemsSold || 0}</p>
+                    <h3 className="mb-1 text-sm font-medium text-purple-800">Items Sold</h3>
+                    <p className="text-xl font-bold text-purple-900 sm:text-2xl">{analytics.totalItemsSold || 0}</p>
                     <p className="text-xs text-purple-600 mt-1">Total units sold</p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
+                  <div className="rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 p-4 sm:p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-200 sm:h-11 sm:w-11">
+                        <svg className="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
                     </div>
-                    <h3 className="text-sm font-medium text-orange-800 mb-1">Pending Orders</h3>
-                    <p className="text-2xl font-bold text-orange-900">{analytics.pendingOrders || 0}</p>
+                    <h3 className="mb-1 text-sm font-medium text-orange-800">Pending Orders</h3>
+                    <p className="text-xl font-bold text-orange-900 sm:text-2xl">{analytics.pendingOrders || 0}</p>
                     <p className="text-xs text-orange-600 mt-1">Orders awaiting action</p>
                   </div>
                 </div>
               </FadeIn>
 
-              {/* Alerts Section */}
+              {/* Recent Customer Orders */}
               <FadeIn delay={0.3}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Live Alerts</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Active Orders</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
-                      {alerts.length} recent
+                      {activeOrders.length} active
                     </span>
                   </div>
 
-                  {alerts.length === 0 ? (
+                  {activeOrders.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                         <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.868 12.683A17.925 17.925 0 012 21h13.395a2 2 0 002-2v-1.5a2 2 0 00-2-2H8.5a2 2 0 01-2-2V8.5a2 2 0 012-2h2.5a2 2 0 002-2V5a2 2 0 00-2-2H8.5a6.5 6.5 0 100 13z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No alerts yet</h3>
-                      <p className="text-gray-600">New orders and updates will appear here.</p>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No active orders right now</h3>
+                      <p className="text-gray-600">New customer orders will appear here, and completed or cancelled ones will move into order history.</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {alerts.map((alert, index) => (
-                        <div key={`${alert.orderId}_${index}`} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
-                          <div className="flex items-start space-x-3">
-                            <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
+                      {activeOrders.slice(0, 4).map((order) => (
+                        <div key={order._id} className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900">
+                                Order #{String(order._id).slice(-6)}
+                              </p>
+                              <p className="mt-1 text-sm text-gray-600">
+                                Customer: {order.userId?.name || "Customer"}
+                              </p>
+                              <p className="mt-1 text-sm text-gray-600">
+                                {order.products?.length || 0} item{order.products?.length === 1 ? "" : "s"} in this order
+                              </p>
+                              <p className="mt-1 text-xs text-gray-500">
+                                {new Date(order.createdAt).toLocaleString()}
+                              </p>
                             </div>
-                            <div>
-                              <p className="font-semibold text-gray-900">{alert.message}</p>
-                              <p className="text-sm text-gray-600">Status: {alert.status}</p>
+                            <div className="text-right">
+                              <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                                order.status === "completed"
+                                  ? "bg-green-100 text-green-800"
+                                  : order.status === "confirmed"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : order.status === "cancelled"
+                                      ? "bg-red-100 text-red-800"
+                                      : "bg-yellow-100 text-yellow-800"
+                              }`}>
+                                {order.status}
+                              </span>
+                              <p className="mt-3 text-lg font-bold text-emerald-700">
+                                ₹{getOrderEarning(order)}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-500">
+                                Payment: {order.paymentStatus}
+                              </p>
                             </div>
+                          </div>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOrderStatusChange(order._id, "confirmed")}
+                              className="rounded-lg bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOrderStatusChange(order._id, "completed")}
+                              className="rounded-lg bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600"
+                            >
+                              Complete
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOrderStatusChange(order._id, "cancelled")}
+                              className="rounded-lg bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600"
+                            >
+                              Cancel
+                            </button>
                           </div>
                         </div>
                       ))}
+                      {activeOrders.length > 4 && (
+                        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                          Showing the latest 4 active orders here. See the full `Received Orders` section below for the full active list.
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -371,7 +471,10 @@ function FarmerDashboard() {
 
               {/* Add/Edit Product Form */}
               <FadeIn delay={0.4}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                <div
+                  ref={editFormRef}
+                  className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl"
+                >
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">
                       {editingProductId ? "Edit Product" : "Add New Product"}
@@ -460,14 +563,17 @@ function FarmerDashboard() {
                         Image URL
                       </label>
                       <input
-                        type="url"
+                        type="text"
                         name="imageUrl"
-                        placeholder="https://example.com/image.jpg"
+                        placeholder="example.com/image.jpg"
                         value={formData.imageUrl}
                         onChange={handleChange}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
                       />
+                      <p className="mt-2 text-sm text-gray-500">
+                        Paste a direct image link. If you omit `https://`, the app will add it for you.
+                      </p>
                     </div>
 
                     {/* Location Section */}
@@ -551,10 +657,12 @@ function FarmerDashboard() {
                         <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                           <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Preview</h3>
                           <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
-                            <img
+                            <ProductImage
                               src={formData.imageUrl}
                               alt={formData.name || "Product preview"}
+                              productName={formData.name || "Product preview"}
                               className="w-full md:w-32 h-32 object-cover rounded-lg border border-gray-300"
+                              fallbackClassName="w-full md:w-32 h-32 object-cover rounded-lg border border-gray-300 p-2"
                             />
                             <div className="flex-1 text-center md:text-left">
                               <h4 className="font-semibold text-gray-900">{formData.name || "Product Name"}</h4>
@@ -613,130 +721,66 @@ function FarmerDashboard() {
                 </div>
               </FadeIn>
 
-              {/* Orders Section */}
-              <FadeIn delay={0.5}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Received Orders</h2>
-                    <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
-                      {orders.length} total
-                    </span>
-                  </div>
-
-                  {orders.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders received yet</h3>
-                      <p className="text-gray-600">Orders will appear here once customers place them.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {orders.map((order) => (
-                        <div key={order._id} className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900">Order #{String(order._id).slice(-6)}</h3>
-                              <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full mt-2 ${
-                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                order.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                                order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {order.status}
-                              </span>
-                            </div>
-                            <div className="text-right mt-4 md:mt-0">
-                              <p className="text-2xl font-bold text-emerald-600">₹{order.totalPrice}</p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
-                            <div>
-                              <span className="font-medium">Customer:</span> {order.userId?.name}
-                            </div>
-                            <div>
-                              <span className="font-medium">Payment:</span> {order.paymentStatus}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleOrderStatusChange(order._id, "confirmed")}
-                              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
-                            >
-                              Confirm
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOrderStatusChange(order._id, "completed")}
-                              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
-                            >
-                              Complete
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOrderStatusChange(order._id, "cancelled")}
-                              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </FadeIn>
-
-              {/* Recent Earnings */}
+              {/* Order History */}
               <FadeIn delay={0.6}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Recent Earnings</h2>
+                    <h2 className="text-2xl font-bold text-gray-900">Order History</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
-                      {analytics.recentEarnings?.length || 0} entries
+                      {orderHistory.length} saved
                     </span>
                   </div>
 
-                  {!analytics.recentEarnings?.length ? (
+                  {!orderHistory.length ? (
                     <div className="text-center py-12">
                       <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
                         <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                         </svg>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No earnings entries yet</h3>
-                      <p className="text-gray-600">Completed orders will appear here with earnings details.</p>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No order history yet</h3>
+                      <p className="text-gray-600">Completed and cancelled orders will be saved here with their earning details.</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {analytics.recentEarnings.map((entry) => (
-                        <div key={entry.orderId} className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center">
-                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                                </svg>
+                      {orderHistory.map((order) => {
+                        const earning = order.status === "completed" ? getOrderEarning(order) : 0;
+
+                        return (
+                          <div key={order._id} className="rounded-xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-4">
+                            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                                  order.status === "completed" ? "bg-green-200" : "bg-red-200"
+                                }`}>
+                                  <svg className={`h-5 w-5 ${
+                                    order.status === "completed" ? "text-green-600" : "text-red-600"
+                                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-gray-900">Order #{String(order._id).slice(-6)}</h3>
+                                  <p className="text-sm text-gray-600">
+                                    {new Date(order.updatedAt || order.createdAt).toLocaleString()} ? {order.userId?.name || "Customer"}
+                                  </p>
+                                  <p className="mt-1 text-xs text-gray-500">
+                                    Status: {order.status} ? Payment: {order.paymentStatus}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="font-semibold text-gray-900">Order #{String(entry.orderId).slice(-6)}</h3>
-                                <p className="text-sm text-gray-600">
-                                  {new Date(entry.createdAt).toLocaleDateString()} • {entry.status}
+                              <div className="text-right">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Earning</p>
+                                <p className={`text-2xl font-bold ${
+                                  earning > 0 ? "text-green-600" : "text-red-500"
+                                }`}>
+                                  ?{earning}
                                 </p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-2xl font-bold text-green-600">₹{entry.amount}</p>
-                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -745,9 +789,57 @@ function FarmerDashboard() {
 
             {/* Sidebar */}
             <div className="space-y-8">
+              <FadeIn delay={0.65}>
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Chat Inbox</h2>
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
+                      {conversations.length} chats
+                    </span>
+                  </div>
+
+                  {conversations.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
+                        <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4-4-4z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1">No customer messages yet</h3>
+                      <p className="text-xs text-gray-600">New conversations will appear here automatically.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {conversations.map((conversation) => (
+                        <Link
+                          key={conversation.userId}
+                          to={`/chat?user=${conversation.userId}&name=${encodeURIComponent(
+                            conversation.name
+                          )}`}
+                          className="block rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 transition-all duration-300 hover:border-emerald-200 hover:bg-emerald-50"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 truncate">{conversation.name}</p>
+                              <p className="text-xs text-emerald-700 capitalize mt-1">{conversation.role || "user"}</p>
+                              <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                                {conversation.lastMessage}
+                              </p>
+                            </div>
+                            <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                              {new Date(conversation.timestamp).toLocaleString()}
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </FadeIn>
+
               {/* Products List */}
               <FadeIn delay={0.7}>
-                <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100">
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-gray-900">Your Products</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
@@ -779,10 +871,12 @@ function FarmerDashboard() {
                       {products.map((product) => (
                         <div key={product._id} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                           <div className="flex items-center space-x-4">
-                            <img
+                            <ProductImage
                               src={product.imageUrl}
                               alt={product.name}
+                              productName={product.name}
                               className="w-16 h-16 object-cover rounded-lg border border-gray-300"
+                              fallbackClassName="w-16 h-16 object-cover rounded-lg border border-gray-300 p-1"
                             />
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>

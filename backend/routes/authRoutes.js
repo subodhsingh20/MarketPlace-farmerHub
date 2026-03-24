@@ -1,9 +1,14 @@
 const express = require("express");
-const { loginUser, registerUser } = require("../controllers/authController");
+const {
+  geocodeAddressLookup,
+  loginUser,
+  registerUser,
+} = require("../controllers/authController");
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.get("/geocode", geocodeAddressLookup);
 
 module.exports = router;
