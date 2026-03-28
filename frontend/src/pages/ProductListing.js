@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import FarmerMap from "../components/FarmerMap";
 import FadeIn from "../components/FadeIn";
 import ContactOptions from "../components/ContactOptions";
@@ -14,13 +14,29 @@ import {
 } from "../services/authService";
 
 function ProductListing() {
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { addToCart, cartItems } = useCart();
   const isCustomer = user?.role === "customer";
   const isFarmer = user?.role === "farmer";
+  const normalizeCategoryParam = (value) => {
+    const normalizedValue = String(value || "").trim().toLowerCase();
+
+    if (normalizedValue === "vegetable" || normalizedValue === "vegetables") {
+      return "vegetable";
+    }
+
+    if (normalizedValue === "pulse" || normalizedValue === "pulses") {
+      return "pulses";
+    }
+
+    return "all";
+  };
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState(() =>
+    normalizeCategoryParam(searchParams.get("category"))
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [locationError, setLocationError] = useState("");
@@ -28,6 +44,10 @@ function ProductListing() {
   const [userLocation, setUserLocation] = useState(null);
   const [nearestFarmerId, setNearestFarmerId] = useState(null);
   const resultsSectionRef = useRef(null);
+
+  useEffect(() => {
+    setSelectedCategory(normalizeCategoryParam(searchParams.get("category")));
+  }, [searchParams]);
 
   useEffect(() => {
     if (isFarmer && user?.id) {
@@ -297,7 +317,7 @@ function ProductListing() {
                   </div>
                   <h3 className="mb-1 text-sm font-medium text-purple-800">Combined Value</h3>
                   <p className="text-xl font-bold text-purple-900 sm:text-2xl">
-                    ₹{products.reduce((total, product) => total + Number(product.price || 0), 0)}
+                    Rs. {products.reduce((total, product) => total + Number(product.price || 0), 0)}
                   </p>
                   <p className="text-xs text-purple-600 mt-1">Visible price points</p>
                 </div>
@@ -363,7 +383,7 @@ function ProductListing() {
 
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold text-emerald-600">₹{product.price}</span>
+                            <span className="text-2xl font-bold text-emerald-600">Rs. {product.price}</span>
                           </div>
                           <div className="text-sm text-gray-600">
                             <p>Available: {product.quantity} units</p>
@@ -489,7 +509,7 @@ function ProductListing() {
                                     </p>
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
                                       <span className="font-semibold text-emerald-600">
-                                        ₹{product.price}
+                                        Rs. {product.price}
                                       </span>
                                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold capitalize text-emerald-800">
                                         {product.category}
@@ -609,12 +629,12 @@ function ProductListing() {
           )}
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
             {/* Sidebar */}
-            <div className="xl:col-span-1 space-y-8">
+            <div className="min-w-0 space-y-8">
               {/* Map Section */}
               <FadeIn delay={0.4}>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xl">
+                <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-gray-900">Discover by Location</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">
@@ -633,7 +653,7 @@ function ProductListing() {
 
               {/* Selected Farmer */}
               <FadeIn delay={0.5}>
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xl">
+                <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-gray-900">Selected Seller</h2>
                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">
@@ -664,7 +684,7 @@ function ProductListing() {
                               fallbackClassName="w-full h-24 object-cover rounded-lg mb-3 p-2"
                             />
                             <h4 className="font-semibold text-gray-900 mb-1">{product.name}</h4>
-                            <p className="text-sm text-gray-600 mb-2">₹{product.price} • {product.quantity} available</p>
+                            <p className="text-sm text-gray-600 mb-2">Rs. {product.price} • {product.quantity} available</p>
                             <ContactOptions
                               farmerId={product.farmerId?._id}
                               farmerName={product.farmerId?.name || selectedFarmerGroup.farmerName}
@@ -692,7 +712,7 @@ function ProductListing() {
             </div>
 
             {/* Products Grid */}
-            <div className="xl:col-span-3">
+            <div className="min-w-0">
               <FadeIn delay={0.6}>
                 <div ref={resultsSectionRef} className="flex items-center justify-between mb-6 scroll-mt-28">
                   <div>
@@ -745,7 +765,7 @@ function ProductListing() {
 
                           <div className="space-y-2 mb-4">
                             <div className="flex items-center justify-between">
-                              <span className="text-2xl font-bold text-emerald-600">₹{product.price}</span>
+                              <span className="text-2xl font-bold text-emerald-600">Rs. {product.price}</span>
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
                               <p>👨‍🌾 {product.farmerId?.name || "Unknown farmer"}</p>

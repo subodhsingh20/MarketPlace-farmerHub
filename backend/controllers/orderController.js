@@ -25,7 +25,7 @@ const mergeRequestedProducts = (products) => {
 
 const placeOrder = async (req, res) => {
   try {
-    const { products, fulfillmentType } = req.body;
+    const { products, fulfillmentType, shippingAddress } = req.body;
 
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: "Order must include products." });
@@ -34,6 +34,12 @@ const placeOrder = async (req, res) => {
     if (!["pickup", "delivery"].includes(fulfillmentType)) {
       return res.status(400).json({
         message: "Fulfillment type must be either pickup or delivery.",
+      });
+    }
+
+    if (!shippingAddress) {
+      return res.status(400).json({
+        message: "A shipping address is required.",
       });
     }
 
@@ -83,6 +89,7 @@ const placeOrder = async (req, res) => {
       products: normalizedProducts,
       totalPrice,
       fulfillmentType,
+      shippingAddress,
       paymentStatus: "paid",
     });
 
@@ -309,7 +316,7 @@ const updateOrderStatus = async (req, res) => {
     }
 
     order.status = status;
-    await order.save();
+    await order.save({ validateModifiedOnly: true });
 
     const populatedOrder = await Order.findById(order._id)
       .populate("userId", "name email phone role")

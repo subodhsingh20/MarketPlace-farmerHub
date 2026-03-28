@@ -83,13 +83,13 @@ function Home() {
 
   if (user?.role === "customer") {
     return (
-      <section className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 px-4 py-8 sm:px-6">
+      <section className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 to-black-50 px-4 py-8 sm:px-6">
         <div className="responsive-shell w-full">
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)] lg:gap-10 xl:gap-14">
             {/* Left: Content */}
             <div className="space-y-6 lg:max-w-[40rem]">
               <div>
-                <span className="responsive-chip mb-5 inline-block bg-blue-100 text-blue-800">Customer marketplace</span>
+                <span className="responsive-chip mb-5 inline-block bg-green-100 text-green-800">Customer marketplace</span>
                 <h1 className="responsive-title mb-5 font-bold">Discover nearby produce and order with confidence.</h1>
                 <p className="responsive-copy max-w-xl">
                   Your customer view is centered on browsing products, comparing
@@ -220,7 +220,7 @@ function Home() {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
               <FadeIn delay={0.2} className="w-full">
                 <Link
-                  to="/products?category=vegetable"
+                  to="/products?category=vegetables"
                   className="group relative block min-h-[22rem] overflow-hidden rounded-[2rem] border border-emerald-200 bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-700 p-7 text-left text-white shadow-[0_24px_60px_rgba(21,128,61,0.18)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_70px_rgba(21,128,61,0.26)] sm:p-8 lg:min-h-[24rem] lg:p-10"
                 >
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.24),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.12))]" />

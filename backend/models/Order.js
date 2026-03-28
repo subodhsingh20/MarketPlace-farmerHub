@@ -21,6 +21,46 @@ const orderProductSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const orderAddressSchema = new mongoose.Schema(
+  {
+    addressId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    label: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    street: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    city: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    state: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    pincode: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
     userId: {
@@ -52,6 +92,9 @@ const orderSchema = new mongoose.Schema(
       enum: ["pickup", "delivery"],
       required: true,
     },
+    shippingAddress: {
+      type: orderAddressSchema,
+    },
     paymentStatus: {
       type: String,
       enum: ["created", "paid", "failed"],
@@ -65,7 +108,7 @@ const orderSchema = new mongoose.Schema(
     },
     paymentMode: {
       type: String,
-      enum: ["test", "live"],
+      enum: ["test", "live", "cod"],
       default: "test",
       required: true,
     },
@@ -86,5 +129,9 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+orderSchema.index({ userId: 1, createdAt: -1 });
+orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ "products.productId": 1, createdAt: -1 });
 
 module.exports = mongoose.model("Order", orderSchema);

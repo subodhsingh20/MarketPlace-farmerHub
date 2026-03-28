@@ -92,7 +92,7 @@ function CartFlyout({ isCustomer }) {
 
                     {/* Price and Quantity Controls */}
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-emerald-600 text-sm">₹{item.price}</span>
+                      <span className="font-bold text-emerald-600 text-sm">Rs. {item.price}</span>
 
                       {/* Quantity Controls */}
                       <div className="flex items-center space-x-2">
@@ -127,7 +127,7 @@ function CartFlyout({ isCustomer }) {
                     {/* Subtotal */}
                     <div className="text-right mt-2">
                       <span className="text-xs text-gray-500">Subtotal: </span>
-                      <span className="font-semibold text-gray-900 text-sm">₹{item.price * item.quantityInCart}</span>
+                      <span className="font-semibold text-gray-900 text-sm">Rs. {item.price * item.quantityInCart}</span>
                     </div>
                   </div>
                 </div>
@@ -142,7 +142,7 @@ function CartFlyout({ isCustomer }) {
         <div className="border-t border-gray-200 p-4 bg-gray-50">
           <div className="flex items-center justify-between mb-4">
             <span className="text-lg font-bold text-gray-900">Total</span>
-            <span className="text-2xl font-bold text-emerald-600">₹{cartTotal}</span>
+            <span className="text-2xl font-bold text-emerald-600">Rs. {cartTotal}</span>
           </div>
 
           <Link

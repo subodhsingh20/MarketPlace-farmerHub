@@ -3,6 +3,10 @@ import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
 
 const SocketContext = createContext(null);
+const defaultSocketUrl =
+  typeof window !== "undefined"
+    ? `${window.location.protocol}//${window.location.hostname}:5000`
+    : "http://localhost:5000";
 
 export function SocketProvider({ children }) {
   const { token } = useAuth();
@@ -18,7 +22,7 @@ export function SocketProvider({ children }) {
     }
 
     const nextSocket = io(
-      process.env.REACT_APP_SOCKET_URL || "http://localhost:5000",
+      process.env.REACT_APP_SOCKET_URL || defaultSocketUrl,
       {
         auth: { token },
       }

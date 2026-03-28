@@ -82,7 +82,10 @@ function ChatWindow({
       </div>
 
       {error && (
-        <div className="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 sm:mx-5">
+        <div
+          aria-live="polite"
+          className="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 sm:mx-5"
+        >
           {error}
         </div>
       )}
@@ -156,7 +159,6 @@ function ChatWindow({
                     )}
 
                     <div className={`mt-2 flex items-center justify-end gap-1 text-[11px] ${isMine ? "text-emerald-100" : "text-gray-400"}`}>
-                      {isMine && <span>{chat.readStatus ? "✓✓" : "✓"}</span>}
                       {isMine && <span>{chat.readStatus ? "Read" : "Sent"}</span>}
                     </div>
                   </div>
