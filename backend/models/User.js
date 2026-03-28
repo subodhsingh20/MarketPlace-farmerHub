@@ -52,6 +52,46 @@ const ratingSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const addressSchema = new mongoose.Schema(
+  {
+    label: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    street: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    city: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    state: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    pincode: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    lastUsedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  { timestamps: true }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -96,6 +136,10 @@ const userSchema = new mongoose.Schema(
     averageRating: {
       type: Number,
       default: 0,
+    },
+    addresses: {
+      type: [addressSchema],
+      default: [],
     },
   },
   {

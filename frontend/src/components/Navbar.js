@@ -22,6 +22,7 @@ function Navbar() {
   const isCustomer = user?.role === "customer";
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
+  const [notification, setNotification] = useState(null);
 
   const navLinks = [
     { to: "/", label: "Home", end: true },
@@ -130,9 +131,59 @@ function Navbar() {
     };
   }, [socket, user]);
 
+  useEffect(() => {
+    if (!socket || !user) {
+      return undefined;
+    }
+
+    const handleChatNotification = (payload) => {
+      if (!payload?.message) {
+        return;
+      }
+
+      setNotification({
+        id: Date.now(),
+        kind: "chat",
+        message: payload.message,
+      });
+    };
+
+    const handleOrderNotification = (payload) => {
+      if (!payload?.message) {
+        return;
+      }
+
+      setNotification({
+        id: Date.now(),
+        kind: "order",
+        message: payload.message,
+      });
+    };
+
+    socket.on("chat_message", handleChatNotification);
+    socket.on("order_alert", handleOrderNotification);
+
+    return () => {
+      socket.off("chat_message", handleChatNotification);
+      socket.off("order_alert", handleOrderNotification);
+    };
+  }, [socket, user]);
+
+  useEffect(() => {
+    if (!notification) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setNotification(null);
+    }, 2800);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [notification]);
+
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 shadow-lg backdrop-blur-lg">
+      <nav className="fixed top-0 left-0 right-0 z-[100] border-b border-gray-200 bg-white/95 shadow-lg backdrop-blur-lg">
         <div className="mx-auto max-w-7xl px-3 sm:px-5 lg:px-6">
           <div className="flex h-16 items-center justify-between gap-2 lg:h-[4.5rem] lg:gap-3 xl:gap-5">
             {/* Brand */}
@@ -317,6 +368,18 @@ function Navbar() {
               <p className="text-emerald-100 text-sm">{cartNotice.productName} added to cart</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {notification && (
+        <div
+          aria-live="polite"
+          className="fixed bottom-4 left-4 z-50 max-w-sm rounded-2xl border border-slate-200 bg-white px-5 py-4 text-slate-900 shadow-2xl"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+            {notification.kind === "chat" ? "New message" : "Order update"}
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-700">{notification.message}</p>
         </div>
       )}
 

@@ -5,6 +5,7 @@ import { CartProvider } from "./context/CartContext";
 import { SocketProvider } from "./context/SocketContext";
 import Navbar from "./components/Navbar";
 import PublicPageLayout from "./components/PublicPageLayout";
+import ScrollToTop from "./components/ScrollToTop";
 import Chat from "./pages/Chat";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import FarmerDashboard from "./pages/FarmerDashboard";
@@ -54,6 +55,7 @@ function App() {
         <CartProvider>
           <BrowserRouter>
             <div className="app-shell">
+              <ScrollToTop />
               <Navbar />
               <AnimatePresence mode="wait">
                   <Routes>
@@ -122,6 +124,32 @@ function App() {
                                 {
                                   title: "For farmers",
                                   body: "Farmers can create listings, manage inventory, respond to buyers, and grow direct relationships with their customers. This placeholder route now gives the footer a real destination instead of relying on a homepage fragment.",
+                                },
+                              ]}
+                            />
+                          </PublicPageLayout>
+                        </PageTransition>
+                      }
+                    />
+                    <Route
+                      path="/pricing"
+                      element={
+                        <PageTransition pageKey="pricing">
+                          <PublicPageLayout>
+                            <InfoPage
+                              eyebrow="Plans"
+                              title="Pricing"
+                              description="Review the Farmer Marketplace pricing approach for customers, farmers, and future marketplace services."
+                              primaryAction={{ to: "/become-seller", label: "Become a Seller" }}
+                              secondaryAction={{ to: "/products", label: "Browse Products" }}
+                              sections={[
+                                {
+                                  title: "For customers",
+                                  body: "Customers can browse and order fresh produce directly from farmers. This placeholder page gives your pricing footer link a working route and can later be expanded into delivery fees, payment details, or promotional plans.",
+                                },
+                                {
+                                  title: "For farmers",
+                                  body: "Farmers can use this space in the future for commission details, onboarding fees, subscription tiers, or featured listing plans. For now, it provides a proper internal page instead of a broken footer destination.",
                                 },
                               ]}
                             />

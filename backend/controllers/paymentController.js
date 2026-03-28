@@ -3,6 +3,7 @@ const Order = require("../models/Order");
 const Product = require("../models/Product");
 const { emitOrderAlert } = require("../socket");
 const { getIo } = require("../socketInstance");
+const User = require("../models/User");
 
 const DEFAULT_PAYMENT_MODE = process.env.PAYMENT_MODE === "live" ? "live" : "test";
 
@@ -26,7 +27,55 @@ const mergeRequestedProducts = (products) => {
   return Array.from(mergedProducts.values());
 };
 
-const getValidatedOrderData = async (products, fulfillmentType) => {
+const normalizeSelectedAddress = (address) => ({
+  addressId: address._id || address.addressId || null,
+  label: String(address.label || "").trim(),
+  name: String(address.name || "").trim(),
+  street: String(address.street || "").trim(),
+  city: String(address.city || "").trim(),
+  state: String(address.state || "").trim(),
+  pincode: String(address.pincode || "").trim(),
+});
+
+const getValidatedAddressData = async (userId, selectedAddressId, selectedAddress) => {
+  if (selectedAddressId) {
+    const user = await User.findById(userId).select("addresses");
+    const savedAddress = user?.addresses?.id(selectedAddressId);
+
+    if (!savedAddress) {
+      throw new Error("Selected address was not found.");
+    }
+
+    savedAddress.lastUsedAt = new Date();
+    await user.save();
+
+    return normalizeSelectedAddress(savedAddress.toObject());
+  }
+
+  const normalizedAddress = normalizeSelectedAddress(selectedAddress || {});
+  const isComplete = [
+    normalizedAddress.label,
+    normalizedAddress.name,
+    normalizedAddress.street,
+    normalizedAddress.city,
+    normalizedAddress.state,
+    normalizedAddress.pincode,
+  ].every(Boolean);
+
+  if (!isComplete) {
+    throw new Error("A complete address is required for checkout.");
+  }
+
+  return normalizedAddress;
+};
+
+const getValidatedOrderData = async (
+  userId,
+  products,
+  fulfillmentType,
+  selectedAddressId,
+  selectedAddress
+) => {
   if (!Array.isArray(products) || products.length === 0) {
     throw new Error("Order must include products.");
   }
@@ -67,10 +116,16 @@ const getValidatedOrderData = async (products, fulfillmentType) => {
       price: product.price,
     });
 
-    totalPrice += product.price * quantity;
+      totalPrice += product.price * quantity;
   }
 
-  return { normalizedProducts, totalPrice };
+  const shippingAddress = await getValidatedAddressData(
+    userId,
+    selectedAddressId,
+    selectedAddress
+  );
+
+  return { normalizedProducts, shippingAddress, totalPrice };
 };
 
 const emitPaidOrderAlert = async (order, userId, message) => {
@@ -97,6 +152,22 @@ const emitPaidOrderAlert = async (order, userId, message) => {
   });
 
   return populatedOrder;
+};
+
+const reserveOrderStock = async (order) => {
+  for (const item of order.products) {
+    const product = await Product.findById(item.productId);
+
+    if (!product || product.quantity < item.quantity) {
+      throw new Error("Product stock changed before order confirmation.");
+    }
+  }
+
+  for (const item of order.products) {
+    await Product.findByIdAndUpdate(item.productId, {
+      $inc: { quantity: -item.quantity },
+    });
+  }
 };
 
 const finalizeOrderPayment = async ({
@@ -157,7 +228,7 @@ const createPaymentOrder = async (req, res) => {
       });
     }
 
-    const { products, fulfillmentType } = req.body;
+    const { products, fulfillmentType, selectedAddressId, selectedAddress } = req.body;
     const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
     const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -167,9 +238,12 @@ const createPaymentOrder = async (req, res) => {
       });
     }
 
-    const { normalizedProducts, totalPrice } = await getValidatedOrderData(
+    const { normalizedProducts, shippingAddress, totalPrice } = await getValidatedOrderData(
+      req.user._id,
       products,
-      fulfillmentType
+      fulfillmentType,
+      selectedAddressId,
+      selectedAddress
     );
 
     const amountInPaise = Math.round(totalPrice * 100);
@@ -208,6 +282,7 @@ const createPaymentOrder = async (req, res) => {
       products: normalizedProducts,
       totalPrice,
       fulfillmentType,
+      shippingAddress,
       paymentStatus: "created",
       paymentProvider: "razorpay",
       paymentMode: "live",
@@ -298,10 +373,13 @@ const verifyPayment = async (req, res) => {
 
 const mockPayment = async (req, res) => {
   try {
-    const { products, fulfillmentType } = req.body;
-    const { normalizedProducts, totalPrice } = await getValidatedOrderData(
+    const { products, fulfillmentType, selectedAddressId, selectedAddress } = req.body;
+    const { normalizedProducts, shippingAddress, totalPrice } = await getValidatedOrderData(
+      req.user._id,
       products,
-      fulfillmentType
+      fulfillmentType,
+      selectedAddressId,
+      selectedAddress
     );
 
     const transactionId = String(Date.now());
@@ -311,6 +389,7 @@ const mockPayment = async (req, res) => {
       products: normalizedProducts,
       totalPrice,
       fulfillmentType,
+      shippingAddress,
       paymentStatus: "created",
       paymentProvider: "mock",
       paymentMode: "test",
@@ -338,7 +417,67 @@ const mockPayment = async (req, res) => {
   }
 };
 
+const createCashOnDeliveryOrder = async (req, res) => {
+  try {
+    const { products, fulfillmentType, selectedAddressId, selectedAddress } = req.body;
+    const { normalizedProducts, shippingAddress, totalPrice } = await getValidatedOrderData(
+      req.user._id,
+      products,
+      fulfillmentType,
+      selectedAddressId,
+      selectedAddress
+    );
+
+    const order = await Order.create({
+      userId: req.user._id,
+      products: normalizedProducts,
+      totalPrice,
+      fulfillmentType,
+      shippingAddress,
+      paymentStatus: "created",
+      paymentProvider: "cod",
+      paymentMode: "cod",
+      status: "pending",
+    });
+
+    await reserveOrderStock(order);
+
+    const populatedOrder = await Order.findById(order._id)
+      .populate("userId", "name email phone role")
+      .populate("products.productId", "name imageUrl category farmerId");
+
+    const farmerIds = [
+      ...new Set(
+        populatedOrder.products
+          .map((item) => item.productId?.farmerId)
+          .filter(Boolean)
+          .map((farmerId) => String(farmerId))
+      ),
+    ];
+
+    emitOrderAlert(getIo(), {
+      type: "order_cod_created",
+      orderId: populatedOrder._id,
+      customerId: req.user._id,
+      farmerIds,
+      message: "A new cash on delivery order has been placed.",
+      status: populatedOrder.status,
+    });
+
+    return res.status(201).json({
+      message: "Cash on delivery order placed successfully.",
+      order: populatedOrder,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: "Failed to place cash on delivery order.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
+  createCashOnDeliveryOrder,
   createPaymentOrder,
   mockPayment,
   verifyPayment,

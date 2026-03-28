@@ -4,6 +4,7 @@ const primaryLinks = [
   { to: "/products", label: "Browse Products" },
   { to: "/become-seller", label: "Become a Seller" },
   { to: "/how-it-works", label: "How It Works" },
+  { to: "/pricing", label: "Pricing" },
 ];
 
 const supportLinks = [

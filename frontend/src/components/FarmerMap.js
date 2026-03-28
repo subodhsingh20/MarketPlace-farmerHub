@@ -25,6 +25,13 @@ function FarmerMap({
   const mapElementRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersLayerRef = useRef(null);
+  const isMapReadyRef = useRef(false);
+  const initialViewRef = useRef({
+    center: userLocation
+      ? [userLocation.latitude, userLocation.longitude]
+      : [20.5937, 78.9629],
+    zoom: userLocation ? 11 : 4,
+  });
 
   const activeFarmerGroups = useMemo(
     () =>
@@ -43,12 +50,12 @@ function FarmerMap({
     const map = L.map(mapElementRef.current, {
       zoomControl: true,
       scrollWheelZoom: true,
-    }).setView(
-      userLocation
-        ? [userLocation.latitude, userLocation.longitude]
-        : [20.5937, 78.9629],
-      userLocation ? 11 : 4
-    );
+    }).setView(initialViewRef.current.center, initialViewRef.current.zoom);
+
+    map.whenReady(() => {
+      isMapReadyRef.current = true;
+      map.invalidateSize(false);
+    });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
@@ -60,17 +67,41 @@ function FarmerMap({
     mapInstanceRef.current = map;
 
     return () => {
+      isMapReadyRef.current = false;
+      map.stop();
       map.remove();
       mapInstanceRef.current = null;
       markersLayerRef.current = null;
     };
-  }, [userLocation]);
+  }, []);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+
+    if (!map || !isMapReadyRef.current) {
+      return undefined;
+    }
+
+    const syncMapSize = () => {
+      if (mapInstanceRef.current && isMapReadyRef.current) {
+        map.invalidateSize(false);
+      }
+    };
+
+    const frameId = window.requestAnimationFrame(syncMapSize);
+    window.addEventListener("resize", syncMapSize);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", syncMapSize);
+    };
+  }, []);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
     const markersLayer = markersLayerRef.current;
 
-    if (!map || !markersLayer) {
+    if (!map || !markersLayer || !isMapReadyRef.current) {
       return;
     }
 
@@ -109,12 +140,15 @@ function FarmerMap({
     });
 
     if (bounds.length === 1) {
-      map.setView(bounds[0], userLocation ? 12 : 10);
+      map.stop();
+      map.setView(bounds[0], userLocation ? 12 : 10, { animate: false });
       return;
     }
 
     if (bounds.length > 1) {
+      map.stop();
       map.fitBounds(bounds, {
+        animate: false,
         padding: [30, 30],
         maxZoom: 13,
       });
@@ -122,8 +156,8 @@ function FarmerMap({
   }, [activeFarmerGroups, nearestFarmerId, onMarkerSelect, selectedFarmerId, userLocation]);
 
   return (
-    <div className="space-y-4">
-      <div className="h-72 w-full overflow-hidden rounded-2xl border border-emerald-100 shadow-inner sm:h-80">
+    <div className="min-w-0 max-w-full space-y-4">
+      <div className="h-72 w-full max-w-full overflow-hidden rounded-2xl border border-emerald-100 shadow-inner sm:h-80">
         <div ref={mapElementRef} className="h-full w-full" />
       </div>
 

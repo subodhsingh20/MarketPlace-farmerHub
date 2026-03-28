@@ -52,6 +52,8 @@ const chatMessageSchema = new mongoose.Schema(
 );
 
 chatMessageSchema.index({ senderId: 1, receiverId: 1, timestamp: 1 });
+chatMessageSchema.index({ receiverId: 1, readStatus: 1, timestamp: -1 });
+chatMessageSchema.index({ senderId: 1, receiverId: 1, orderId: 1, timestamp: 1 });
 
 chatMessageSchema.virtual("recipientId")
   .get(function getRecipientId() {

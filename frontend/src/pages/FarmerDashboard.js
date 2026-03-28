@@ -64,6 +64,39 @@ function FarmerDashboard() {
       0
     );
 
+  const formatOrderAddress = (address) => {
+    if (!address) {
+      return "Address not provided";
+    }
+
+    const parts = [
+      address.label,
+      address.name,
+      address.street,
+      address.city,
+      address.state,
+      address.pincode,
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(", ") : "Address not provided";
+  };
+
+  const getStatusBadgeClass = (status) => {
+    if (status === "completed") {
+      return "bg-green-100 text-green-800";
+    }
+
+    if (status === "cancelled") {
+      return "bg-red-100 text-red-800";
+    }
+
+    if (status === "confirmed") {
+      return "bg-blue-100 text-blue-800";
+    }
+
+    return "bg-yellow-100 text-yellow-800";
+  };
+
   useEffect(() => {
     if (!farmerId) {
       return;
@@ -299,7 +332,7 @@ function FarmerDashboard() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-emerald-100">Lifetime Earnings</span>
-                      <span className="text-2xl font-bold">₹{analytics.totalEarnings || 0}</span>
+                      <span className="text-2xl font-bold">Rs. {analytics.totalEarnings || 0}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-emerald-100">Products Listed</span>
@@ -330,7 +363,7 @@ function FarmerDashboard() {
                       </div>
                     </div>
                     <h3 className="mb-1 text-sm font-medium text-blue-800">Total Earnings</h3>
-                    <p className="text-xl font-bold text-blue-900 sm:text-2xl">₹{analytics.totalEarnings || 0}</p>
+                    <p className="text-xl font-bold text-blue-900 sm:text-2xl">Rs. {analytics.totalEarnings || 0}</p>
                     <p className="text-xs text-blue-600 mt-1">All paid orders combined</p>
                   </div>
 
@@ -343,7 +376,7 @@ function FarmerDashboard() {
                       </div>
                     </div>
                     <h3 className="mb-1 text-sm font-medium text-emerald-800">Completed Revenue</h3>
-                    <p className="text-xl font-bold text-emerald-900 sm:text-2xl">₹{analytics.completedEarnings || 0}</p>
+                    <p className="text-xl font-bold text-emerald-900 sm:text-2xl">Rs. {analytics.completedEarnings || 0}</p>
                     <p className="text-xs text-emerald-600 mt-1">Revenue from completed orders</p>
                   </div>
 
@@ -427,7 +460,7 @@ function FarmerDashboard() {
                                 {order.status}
                               </span>
                               <p className="mt-3 text-lg font-bold text-emerald-700">
-                                ₹{getOrderEarning(order)}
+                                Rs. {getOrderEarning(order)}
                               </p>
                               <p className="mt-1 text-xs text-gray-500">
                                 Payment: {order.paymentStatus}
@@ -509,7 +542,7 @@ function FarmerDashboard() {
 
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Price (₹)
+                          Price (Rs.)
                         </label>
                         <input
                           type="number"
@@ -666,7 +699,7 @@ function FarmerDashboard() {
                             />
                             <div className="flex-1 text-center md:text-left">
                               <h4 className="font-semibold text-gray-900">{formData.name || "Product Name"}</h4>
-                              <p className="text-gray-600">₹{formData.price || "0.00"} • {formData.quantity || "0"} available</p>
+                              <p className="text-gray-600">Rs. {formData.price || "0.00"} • {formData.quantity || "0"} available</p>
                               <p className="text-sm text-gray-500 capitalize">{formData.category}</p>
                             </div>
                           </div>
@@ -745,36 +778,122 @@ function FarmerDashboard() {
                     <div className="space-y-4">
                       {orderHistory.map((order) => {
                         const earning = order.status === "completed" ? getOrderEarning(order) : 0;
+                        const itemCount = (order.products || []).reduce(
+                          (total, item) => total + Number(item.quantity || 0),
+                          0
+                        );
+                        const historyTone =
+                          order.status === "completed"
+                            ? "border-green-200 bg-gradient-to-r from-green-50 to-emerald-50"
+                            : "border-red-200 bg-gradient-to-r from-red-50 to-rose-50";
 
                         return (
-                          <div key={order._id} className="rounded-xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-4">
-                            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                              <div className="flex items-center space-x-3">
-                                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                                  order.status === "completed" ? "bg-green-200" : "bg-red-200"
-                                }`}>
-                                  <svg className={`h-5 w-5 ${
-                                    order.status === "completed" ? "text-green-600" : "text-red-600"
-                                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
+                          <div key={order._id} className={`rounded-2xl border p-5 shadow-sm ${historyTone}`}>
+                            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start gap-3">
+                                  <div className={`mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+                                    order.status === "completed" ? "bg-green-200" : "bg-red-200"
+                                  }`}>
+                                    <svg
+                                      className={`h-5 w-5 ${
+                                        order.status === "completed" ? "text-green-600" : "text-red-600"
+                                      }`}
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d={
+                                          order.status === "completed"
+                                            ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            : "M6 18L18 6M6 6l12 12"
+                                        }
+                                      />
+                                    </svg>
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                      <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                          Order #{String(order._id).slice(-6)}
+                                        </h3>
+                                        <p className="mt-1 text-sm text-gray-600">
+                                          {new Date(order.updatedAt || order.createdAt).toLocaleString()}
+                                        </p>
+                                        <p className="mt-1 text-sm text-gray-700">
+                                          Customer: {order.userId?.name || "Customer"}
+                                          {order.userId?.phone ? ` | ${order.userId.phone}` : ""}
+                                        </p>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2">
+                                        <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${getStatusBadgeClass(order.status)}`}>
+                                          {order.status}
+                                        </span>
+                                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-700">
+                                          Payment {order.paymentStatus}
+                                        </span>
+                                        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold capitalize text-amber-800">
+                                          {order.fulfillmentType || "delivery"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <h3 className="font-semibold text-gray-900">Order #{String(order._id).slice(-6)}</h3>
-                                  <p className="text-sm text-gray-600">
-                                    {new Date(order.updatedAt || order.createdAt).toLocaleString()} ? {order.userId?.name || "Customer"}
-                                  </p>
-                                  <p className="mt-1 text-xs text-gray-500">
-                                    Status: {order.status} ? Payment: {order.paymentStatus}
-                                  </p>
+
+                                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                  <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                      Delivery Address
+                                    </p>
+                                    <p className="mt-2 text-sm leading-6 text-gray-700">
+                                      {formatOrderAddress(order.shippingAddress)}
+                                    </p>
+                                  </div>
+                                  <div className="rounded-xl border border-white/70 bg-white/70 p-4">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                      Order Snapshot
+                                    </p>
+                                    <p className="mt-2 text-sm text-gray-700">
+                                      {itemCount} unit{itemCount === 1 ? "" : "s"} across {order.products?.length || 0} item{order.products?.length === 1 ? "" : "s"}
+                                    </p>
+                                    <p className="mt-1 text-sm text-gray-700">
+                                      Customer total: Rs. {order.totalPrice || 0}
+                                    </p>
+                                    <p className="mt-1 text-sm text-gray-700">
+                                      Your earning: Rs. {earning}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                  {(order.products || []).map((item) => (
+                                    <span
+                                      key={`${order._id}-${item.productId?._id || item.productId}`}
+                                      className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm"
+                                    >
+                                      {item.productId?.name || "Product"} x {item.quantity}
+                                    </span>
+                                  ))}
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Earning</p>
-                                <p className={`text-2xl font-bold ${
+
+                              <div className="rounded-2xl border border-white/80 bg-white/80 px-5 py-4 text-left shadow-sm lg:min-w-[10rem] lg:text-right">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                  Earning
+                                </p>
+                                <p className={`mt-2 text-3xl font-bold ${
                                   earning > 0 ? "text-green-600" : "text-red-500"
                                 }`}>
-                                  ?{earning}
+                                  Rs. {earning}
+                                </p>
+                                <p className="mt-2 text-xs text-gray-500">
+                                  {order.status === "completed"
+                                    ? "Credited from completed order"
+                                    : "No earning on cancelled order"}
                                 </p>
                               </div>
                             </div>
@@ -880,7 +999,7 @@ function FarmerDashboard() {
                             />
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-                              <p className="text-sm text-gray-600">₹{product.price} • {product.quantity} available</p>
+                              <p className="text-sm text-gray-600">Rs. {product.price} • {product.quantity} available</p>
                               <p className="text-xs text-gray-500 capitalize">{product.category}</p>
                             </div>
                             <div className="flex space-x-2">

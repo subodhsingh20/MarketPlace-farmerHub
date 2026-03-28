@@ -1,7 +1,12 @@
 import axios from "axios";
 
+const defaultApiBaseUrl =
+  typeof window !== "undefined"
+    ? `${window.location.protocol}//${window.location.hostname}:5000/api`
+    : "http://localhost:5000/api";
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
+  baseURL: process.env.REACT_APP_API_URL || defaultApiBaseUrl,
 });
 
 const storedToken =
@@ -43,12 +48,32 @@ export function createMockPayment(payload) {
   return api.post("/payment/mock", payload);
 }
 
+export function createCashOnDeliveryOrder(payload) {
+  return api.post("/payments/cod", payload);
+}
+
 export function verifyPayment(payload) {
   return api.post("/payments/verify", payload);
 }
 
 export function getUserOrders() {
   return api.get("/orders/my-orders");
+}
+
+export function getCustomerAddresses() {
+  return api.get("/customer/addresses");
+}
+
+export function addCustomerAddress(payload) {
+  return api.post("/customer/address", payload);
+}
+
+export function updateCustomerAddress(addressId, payload) {
+  return api.put(`/customer/address/${addressId}`, payload);
+}
+
+export function deleteCustomerAddress(addressId) {
+  return api.delete(`/customer/address/${addressId}`);
 }
 
 export function getFarmerOrders() {

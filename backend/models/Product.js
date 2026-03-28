@@ -102,6 +102,9 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.index({ locationPoint: "2dsphere" });
+productSchema.index({ farmerId: 1, createdAt: -1 });
+productSchema.index({ category: 1, createdAt: -1 });
+productSchema.index({ name: 1 });
 
 productSchema.pre("validate", function syncLocationPoint() {
   if (
