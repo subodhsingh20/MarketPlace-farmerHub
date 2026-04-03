@@ -14,6 +14,7 @@ import {
   getUserOrders,
   verifyPayment,
 } from "../services/authService";
+import { formatPriceWithUnit, formatQuantityWithUnit } from "../utils/productUnits";
 
 const PAYMENT_MODE =
   (process.env.REACT_APP_PAYMENT_MODE || "test").toLowerCase() === "live"
@@ -283,16 +284,21 @@ function CustomerDashboard() {
                                 <p className="text-sm text-gray-600">{item.category}</p>
                                 <p className="text-sm text-gray-600">Farmer: {item.farmerId?.name || "Unknown farmer"}</p>
                               </div>
-                              <p className="text-2xl font-bold text-emerald-600">{formatCurrency(item.price)}</p>
+                              <p className="text-2xl font-bold text-emerald-600">
+                                {formatPriceWithUnit(item.price, item)}
+                              </p>
                             </div>
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                               <div className="flex items-center gap-4">
                                 <label className="text-sm font-medium text-gray-700">Quantity:</label>
                                 <div className="flex items-center rounded-lg border border-gray-300">
                                   <button type="button" className="px-3 py-2" onClick={() => decreaseCartQuantity(item._id)}>-</button>
-                                  <input type="number" min="1" max={item.quantity} value={item.quantityInCart} onChange={(event) => updateCartQuantity(item._id, Number(event.target.value))} className="w-16 border-0 px-3 py-2 text-center focus:ring-0" />
+                                  <input type="number" min="1" max={item.quantity} value={item.quantityInCart} onChange={(event) => updateCartQuantity(item._id, Number(event.target.value))} className="w-20 border-0 px-3 py-2 text-center focus:ring-0" />
                                   <button type="button" className="px-3 py-2" onClick={() => increaseCartQuantity(item._id)} disabled={item.quantityInCart >= item.quantity}>+</button>
                                 </div>
+                                <span className="text-sm text-gray-500">
+                                  {formatQuantityWithUnit(item.quantityInCart, item)}
+                                </span>
                               </div>
                               <button type="button" className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600" onClick={() => removeFromCart(item._id)}>Remove</button>
                             </div>
@@ -401,8 +407,8 @@ function CustomerDashboard() {
 
                   <div className="grid grid-cols-1 gap-4">
                     <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-4">
-                      <p className="text-sm font-medium text-blue-800">Total Items</p>
-                      <p className="text-2xl font-bold text-blue-900">{cartItems.reduce((total, item) => total + item.quantityInCart, 0)}</p>
+                      <p className="text-sm font-medium text-blue-800">Total Products</p>
+                      <p className="text-2xl font-bold text-blue-900">{cartItems.length}</p>
                     </div>
                     <div className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100 p-4">
                       <p className="text-sm font-medium text-emerald-800">Total Amount</p>

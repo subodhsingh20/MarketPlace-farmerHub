@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import ContactOptions from "./ContactOptions";
 import ProductImage from "./ProductImage";
+import { formatAvailableStock, formatPriceWithUnit } from "../utils/productUnits";
 
 const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
   const renderStars = (rating) => {
@@ -8,10 +9,10 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
 
-    for (let i = 0; i < fullStars; i++) {
+    for (let i = 0; i < fullStars; i += 1) {
       stars.push(
         <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       );
     }
@@ -19,16 +20,16 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
     if (hasHalfStar) {
       stars.push(
         <svg key="half" className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 24 24">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77V2z"/>
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77V2z" />
         </svg>
       );
     }
 
     const emptyStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < emptyStars; i++) {
+    for (let i = 0; i < emptyStars; i += 1) {
       stars.push(
         <svg key={`empty-${i}`} className="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 24 24">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       );
     }
@@ -38,7 +39,6 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
 
   return (
     <article className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col justify-between h-full transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:-translate-y-1">
-      {/* Product Image */}
       <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
         <ProductImage
           src={product.imageUrl}
@@ -54,9 +54,7 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
         </div>
       </div>
 
-      {/* Product Details */}
       <div className="p-6 flex-grow flex flex-col">
-        {/* Header */}
         <div className="mb-4">
           <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">
             {product.name}
@@ -71,13 +69,12 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
           </div>
         </div>
 
-        {/* Price */}
         <div className="mb-4">
-          <span className="text-3xl font-bold text-emerald-600">₹{product.price}</span>
-          <span className="text-sm text-gray-500 ml-1">per unit</span>
+          <span className="text-3xl font-bold text-emerald-600">
+            {formatPriceWithUnit(product.price, product)}
+          </span>
         </div>
 
-        {/* Product Info */}
         <div className="space-y-2 mb-6 flex-grow">
           <div className="flex items-center text-sm text-gray-600">
             <svg className="w-4 h-4 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -94,8 +91,7 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
             <span>
               {product.location
                 ? `${product.location.latitude.toFixed(2)}, ${product.location.longitude.toFixed(2)}`
-                : "Location unknown"
-              }
+                : "Location unknown"}
             </span>
           </div>
 
@@ -103,7 +99,7 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
             <svg className="w-4 h-4 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <span className="font-medium">{product.quantity} units available</span>
+            <span className="font-medium">{formatAvailableStock(product.quantity, product)}</span>
           </div>
         </div>
 

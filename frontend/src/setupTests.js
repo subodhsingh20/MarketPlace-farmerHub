@@ -19,3 +19,4 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
+window.scrollTo = jest.fn();

@@ -7,6 +7,11 @@ import ProductImage from "../components/ProductImage";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import {
+  formatAvailableStock,
+  formatPriceWithUnit,
+  formatQuantityWithUnit,
+} from "../utils/productUnits";
+import {
   getAllProducts,
   getNearestFarmers,
   getNearbyProducts,
@@ -300,11 +305,11 @@ function ProductListing() {
                       </svg>
                     </div>
                   </div>
-                  <h3 className="mb-1 text-sm font-medium text-emerald-800">Total Units</h3>
+                  <h3 className="mb-1 text-sm font-medium text-emerald-800">Total Stock</h3>
                   <p className="text-xl font-bold text-emerald-900 sm:text-2xl">
                     {products.reduce((total, product) => total + Number(product.quantity || 0), 0)}
                   </p>
-                  <p className="text-xs text-emerald-600 mt-1">Currently listed</p>
+                  <p className="text-xs text-emerald-600 mt-1">Combined kg and litre listed</p>
                 </div>
 
                 <div className="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 p-4 sm:p-5">
@@ -383,10 +388,10 @@ function ProductListing() {
 
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold text-emerald-600">Rs. {product.price}</span>
+                            <span className="text-2xl font-bold text-emerald-600">{formatPriceWithUnit(product.price, product)}</span>
                           </div>
                           <div className="text-sm text-gray-600">
-                            <p>Available: {product.quantity} units</p>
+                            <p>Available: {formatQuantityWithUnit(product.quantity, product)}</p>
                           </div>
                         </div>
 
@@ -509,13 +514,13 @@ function ProductListing() {
                                     </p>
                                     <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-600">
                                       <span className="font-semibold text-emerald-600">
-                                        Rs. {product.price}
+                                        {formatPriceWithUnit(product.price, product)}
                                       </span>
                                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold capitalize text-emerald-800">
                                         {product.category}
                                       </span>
                                       <span className="text-xs sm:text-sm">
-                                        {product.quantity} units
+                                        {formatQuantityWithUnit(product.quantity, product)}
                                       </span>
                                     </div>
                                   </div>
@@ -684,7 +689,7 @@ function ProductListing() {
                               fallbackClassName="w-full h-24 object-cover rounded-lg mb-3 p-2"
                             />
                             <h4 className="font-semibold text-gray-900 mb-1">{product.name}</h4>
-                            <p className="text-sm text-gray-600 mb-2">Rs. {product.price} • {product.quantity} available</p>
+                            <p className="text-sm text-gray-600 mb-2">{formatPriceWithUnit(product.price, product)} • {formatAvailableStock(product.quantity, product)}</p>
                             <ContactOptions
                               farmerId={product.farmerId?._id}
                               farmerName={product.farmerId?.name || selectedFarmerGroup.farmerName}
@@ -765,11 +770,11 @@ function ProductListing() {
 
                           <div className="space-y-2 mb-4">
                             <div className="flex items-center justify-between">
-                              <span className="text-2xl font-bold text-emerald-600">Rs. {product.price}</span>
+                              <span className="text-2xl font-bold text-emerald-600">{formatPriceWithUnit(product.price, product)}</span>
                             </div>
                             <div className="text-sm text-gray-600 space-y-1">
                               <p>👨‍🌾 {product.farmerId?.name || "Unknown farmer"}</p>
-                              <p>📦 Available: {product.quantity} units</p>
+                              <p>📦 Available: {formatQuantityWithUnit(product.quantity, product)}</p>
                             </div>
                           </div>
                           <div className="mb-4">

@@ -102,7 +102,7 @@ const getValidatedOrderData = async (
       throw new Error(`Product not found for id ${item.productId}.`);
     }
 
-    if (!Number.isInteger(quantity) || quantity <= 0) {
+    if (!Number.isFinite(quantity) || quantity <= 0) {
       throw new Error(`Invalid quantity for product ${product.name}.`);
     }
 
@@ -114,6 +114,7 @@ const getValidatedOrderData = async (
       productId: product._id,
       quantity,
       price: product.price,
+      unit: product.unit,
     });
 
       totalPrice += product.price * quantity;
