@@ -83,6 +83,7 @@ The cleanest Railway setup is two services from this same GitHub repo.
 ### 1. Backend Service
 
 - Root directory: `backend`
+- Dockerfile path: `backend/Dockerfile` if you deploy the backend as a Docker service
 - Build command: `npm install`
 - Start command: `npm start`
 - Required variables:
