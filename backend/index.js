@@ -16,16 +16,10 @@ const { initializeSocket } = require("./socket");
 const { setIo } = require("./socketInstance");
 const { protect } = require("./middleware/authMiddleware");
 const { requestLogger } = require("./middleware/requestLogger");
+const { isAllowedOrigin } = require("./utils/corsOrigins");
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 dotenv.config({ path: path.resolve(__dirname, ".env"), override: true });
-
-const DEFAULT_CLIENT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"];
-const configuredClientOrigins = String(process.env.CLIENT_URL || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-const allowedOrigins = [...new Set([...DEFAULT_CLIENT_ORIGINS, ...configuredClientOrigins])];
 
 const app = express();
 const server = http.createServer(app);
@@ -40,7 +34,7 @@ app.set("trust proxy", 1);
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
 
