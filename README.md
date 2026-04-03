@@ -32,7 +32,7 @@ Copy [backend/.env.example](backend/.env.example) and set:
 `CLIENT_URL` can be a comma-separated list for multiple allowed origins, for example:
 
 ```env
-CLIENT_URL=http://localhost:3000,https://your-frontend-domain.up.railway.app
+CLIENT_URL=http://localhost:3000,http://your-server-ip
 ```
 
 ### Frontend
@@ -76,47 +76,51 @@ The API health check is available at `/api/health`.
 - Example env files are available for backend and frontend
 - Docker compose env variable names were aligned with the app
 
-## Railway Deployment Plan
+## Docker Deployment Plan
 
-The cleanest Railway setup is two services from this same GitHub repo.
+This project is set up for a GitHub-to-Docker pipeline using GitHub Actions and Docker Hub.
 
-### 1. Backend Service
+### GitHub Actions Pipeline
 
-- Root directory: `backend`
-- Dockerfile path: `backend/Dockerfile` if you deploy the backend as a Docker service
-- Build command: `npm install`
-- Start command: `npm start`
-- Required variables:
-  - `MONGODB_URI`
-  - `JWT_SECRET`
-  - `CLIENT_URL`
-  - `PAYMENT_MODE`
-  - `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` when using live payments
+The workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
 
-### 2. Frontend Service
+- builds the backend image from `backend/Dockerfile`
+- builds the frontend image from `frontend/Dockerfile`
+- pushes both images to Docker Hub on pushes to `main`
+- validates that images still build on pull requests without pushing
 
-You can deploy the frontend using its Dockerfile.
+### Docker Hub Images
 
-- Root directory: `frontend`
-- Dockerfile path: `frontend/dockerfile`
-- Required variables:
-  - `REACT_APP_API_URL`
-  - `REACT_APP_SOCKET_URL`
-  - `REACT_APP_PAYMENT_MODE`
-  - `REACT_APP_RAZORPAY_KEY_ID` for live mode
+The current workflow pushes:
 
-### 3. Cross-Service Wiring
+- `subodhsingh20/farmer-marketplace-backend:latest`
+- `subodhsingh20/farmer-marketplace-frontend:latest`
 
-- Set frontend `REACT_APP_API_URL` to your backend Railway URL plus `/api`
-- Set frontend `REACT_APP_SOCKET_URL` to your backend Railway URL
-- Set backend `CLIENT_URL` to your frontend Railway URL
+### Production Deployment With Docker Compose
 
-Example:
+Use [docker-compose.prod.yml](docker-compose.prod.yml) on your server after logging in to Docker Hub:
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Required Production Environment Variables
+
+Set these on the server that runs Docker Compose:
+
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `PAYMENT_MODE`
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+
+If your frontend is served from a custom domain or IP and the backend needs strict CORS, set `CLIENT_URL` in the backend environment to the frontend origin.
+
+### Example Backend CORS Value
 
 ```env
-REACT_APP_API_URL=https://farmer-marketplace-backend.up.railway.app/api
-REACT_APP_SOCKET_URL=https://farmer-marketplace-backend.up.railway.app
-CLIENT_URL=https://farmer-marketplace-frontend.up.railway.app
+CLIENT_URL=http://localhost:3000,http://your-server-ip
 ```
 
 ## Recommended Next Enhancements
