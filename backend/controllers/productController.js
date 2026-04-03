@@ -2,7 +2,8 @@ const Product = require("../models/Product");
 
 const addProduct = async (req, res) => {
   try {
-    const { name, price, quantity, category, imageUrl, location } = req.body;
+    const { name, price, quantity, unit, category, imageUrl, location } = req.body;
+    const normalizedUnit = unit === "litre" ? "litre" : "kg";
 
     if (
       !name ||
@@ -24,6 +25,7 @@ const addProduct = async (req, res) => {
       name,
       price,
       quantity,
+      unit: normalizedUnit,
       category,
       imageUrl,
       farmerId: req.user._id,
@@ -61,6 +63,7 @@ const updateProduct = async (req, res) => {
       "name",
       "price",
       "quantity",
+      "unit",
       "category",
       "imageUrl",
       "location",
@@ -182,6 +185,7 @@ const getNearbyProducts = async (req, res) => {
           name: 1,
           price: 1,
           quantity: 1,
+          unit: 1,
           category: 1,
           imageUrl: 1,
           location: 1,

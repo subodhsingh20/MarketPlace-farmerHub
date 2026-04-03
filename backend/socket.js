@@ -13,11 +13,25 @@ const {
   markConversationAsRead,
 } = require("./services/chatService");
 
+const DEFAULT_CLIENT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"];
+const configuredClientOrigins = String(process.env.CLIENT_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedOrigins = [...new Set([...DEFAULT_CLIENT_ORIGINS, ...configuredClientOrigins])];
+
 const initializeSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:3000",
+      origin(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        return callback(new Error("Socket CORS origin not allowed."));
+      },
       methods: ["GET", "POST"],
+      credentials: true,
     },
   });
 

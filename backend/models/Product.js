@@ -64,6 +64,12 @@ const productSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    unit: {
+      type: String,
+      enum: ["kg", "litre"],
+      default: "kg",
+      required: true,
+    },
     category: {
       type: String,
       enum: ["vegetable", "pulses"],

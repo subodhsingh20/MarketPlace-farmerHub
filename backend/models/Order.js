@@ -10,12 +10,18 @@ const orderProductSchema = new mongoose.Schema(
     quantity: {
       type: Number,
       required: true,
-      min: 1,
+      min: 0.01,
     },
     price: {
       type: Number,
       required: true,
       min: 0,
+    },
+    unit: {
+      type: String,
+      enum: ["kg", "litre"],
+      default: "kg",
+      required: true,
     },
   },
   { _id: false }

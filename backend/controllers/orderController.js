@@ -63,7 +63,7 @@ const placeOrder = async (req, res) => {
         });
       }
 
-      if (!Number.isInteger(quantity) || quantity <= 0) {
+      if (!Number.isFinite(quantity) || quantity <= 0) {
         return res.status(400).json({
           message: `Invalid quantity for product ${product.name}.`,
         });
@@ -79,6 +79,7 @@ const placeOrder = async (req, res) => {
         productId: product._id,
         quantity,
         price: product.price,
+        unit: product.unit,
       });
 
       totalPrice += product.price * quantity;

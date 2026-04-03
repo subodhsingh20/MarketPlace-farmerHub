@@ -24,8 +24,8 @@ FROM nginx:alpine
 # Copy built files from build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy custom nginx config if needed (optional)
-# COPY nginx.conf /etc/nginx/nginx.conf
+# Support React Router SPA routes in production
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
 EXPOSE 80

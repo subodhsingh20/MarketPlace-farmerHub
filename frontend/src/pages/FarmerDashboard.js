@@ -5,6 +5,11 @@ import { useSocket } from "../context/SocketContext";
 import FadeIn from "../components/FadeIn";
 import ProductImage, { normalizeImageUrl } from "../components/ProductImage";
 import {
+  formatAvailableStock,
+  formatPriceWithUnit,
+  formatQuantityWithUnit,
+} from "../utils/productUnits";
+import {
   addProduct,
   getChatConversations,
   getFarmerAnalytics,
@@ -19,6 +24,7 @@ const initialFormState = {
   name: "",
   price: "",
   quantity: "",
+  unit: "kg",
   category: "vegetable",
   imageUrl: "",
   latitude: "",
@@ -192,6 +198,7 @@ function FarmerDashboard() {
       name: product.name,
       price: String(product.price),
       quantity: String(product.quantity),
+      unit: product.unit || "kg",
       category: product.category,
       imageUrl: product.imageUrl,
       latitude: String(product.location?.latitude ?? ""),
@@ -239,6 +246,7 @@ function FarmerDashboard() {
       name: formData.name,
       price: Number(formData.price),
       quantity: Number(formData.quantity),
+      unit: formData.unit,
       category: formData.category,
       imageUrl: normalizeImageUrl(formData.imageUrl),
       location: {
@@ -388,9 +396,9 @@ function FarmerDashboard() {
                         </svg>
                       </div>
                     </div>
-                    <h3 className="mb-1 text-sm font-medium text-purple-800">Items Sold</h3>
+                    <h3 className="mb-1 text-sm font-medium text-purple-800">Quantity Sold</h3>
                     <p className="text-xl font-bold text-purple-900 sm:text-2xl">{analytics.totalItemsSold || 0}</p>
-                    <p className="text-xs text-purple-600 mt-1">Total units sold</p>
+                    <p className="text-xs text-purple-600 mt-1">Combined kg and litre sold</p>
                   </div>
 
                   <div className="rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 p-4 sm:p-5">
@@ -441,7 +449,7 @@ function FarmerDashboard() {
                                 Customer: {order.userId?.name || "Customer"}
                               </p>
                               <p className="mt-1 text-sm text-gray-600">
-                                {order.products?.length || 0} item{order.products?.length === 1 ? "" : "s"} in this order
+                                {order.products?.length || 0} product{order.products?.length === 1 ? "" : "s"} in this order
                               </p>
                               <p className="mt-1 text-xs text-gray-500">
                                 {new Date(order.createdAt).toLocaleString()}
@@ -542,7 +550,7 @@ function FarmerDashboard() {
 
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Price (Rs.)
+                          Price (Rs. per unit)
                         </label>
                         <input
                           type="number"
@@ -561,7 +569,7 @@ function FarmerDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Quantity
+                          Available Stock
                         </label>
                         <input
                           type="number"
@@ -573,6 +581,21 @@ function FarmerDashboard() {
                           required
                           className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
                         />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Unit
+                        </label>
+                        <select
+                          name="unit"
+                          value={formData.unit}
+                          onChange={handleChange}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 bg-white"
+                        >
+                          <option value="kg">Kilogram (kg)</option>
+                          <option value="litre">Litre</option>
+                        </select>
                       </div>
 
                       <div>
@@ -699,7 +722,9 @@ function FarmerDashboard() {
                             />
                             <div className="flex-1 text-center md:text-left">
                               <h4 className="font-semibold text-gray-900">{formData.name || "Product Name"}</h4>
-                              <p className="text-gray-600">Rs. {formData.price || "0.00"} • {formData.quantity || "0"} available</p>
+                              <p className="text-gray-600">
+                                {formatPriceWithUnit(formData.price || 0, formData.unit)} • {formatAvailableStock(formData.quantity || 0, formData.unit)}
+                              </p>
                               <p className="text-sm text-gray-500 capitalize">{formData.category}</p>
                             </div>
                           </div>
@@ -858,7 +883,7 @@ function FarmerDashboard() {
                                       Order Snapshot
                                     </p>
                                     <p className="mt-2 text-sm text-gray-700">
-                                      {itemCount} unit{itemCount === 1 ? "" : "s"} across {order.products?.length || 0} item{order.products?.length === 1 ? "" : "s"}
+                                      {itemCount} total quantity across {order.products?.length || 0} product{order.products?.length === 1 ? "" : "s"}
                                     </p>
                                     <p className="mt-1 text-sm text-gray-700">
                                       Customer total: Rs. {order.totalPrice || 0}
@@ -875,7 +900,7 @@ function FarmerDashboard() {
                                       key={`${order._id}-${item.productId?._id || item.productId}`}
                                       className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm"
                                     >
-                                      {item.productId?.name || "Product"} x {item.quantity}
+                                      {item.productId?.name || "Product"} • {formatQuantityWithUnit(item.quantity, item.unit || item.productId?.unit)}
                                     </span>
                                   ))}
                                 </div>
@@ -999,7 +1024,9 @@ function FarmerDashboard() {
                             />
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-                              <p className="text-sm text-gray-600">Rs. {product.price} • {product.quantity} available</p>
+                              <p className="text-sm text-gray-600">
+                                {formatPriceWithUnit(product.price, product)} • {formatAvailableStock(product.quantity, product)}
+                              </p>
                               <p className="text-xs text-gray-500 capitalize">{product.category}</p>
                             </div>
                             <div className="flex space-x-2">

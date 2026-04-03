@@ -17,7 +17,7 @@ function SelectAddressSection({
   isSubmitting,
   saveError,
 }) {
-  const [isFormOpen, setIsFormOpen] = useState(addresses.length === 0);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [formValues, setFormValues] = useState(EMPTY_ADDRESS_FORM);
   const [validationErrors, setValidationErrors] = useState({});
 
@@ -80,7 +80,7 @@ function SelectAddressSection({
       <div className="mt-6 space-y-4">
         {addresses.length === 0 ? (
           <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-800">
-            No saved addresses yet. Add one to continue with checkout.
+            No saved addresses yet. Click "Add New Address" to continue with checkout.
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { formatPriceWithUnit, formatQuantityWithUnit } from "../utils/productUnits";
 
 function CartFlyout({ isCustomer }) {
   const {
@@ -13,12 +14,13 @@ function CartFlyout({ isCustomer }) {
 
   return (
     <div className="absolute top-full right-0 mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-300">
-      {/* Header */}
       <div className="bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-4 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold">Your Cart</h3>
-            <p className="text-emerald-100 text-sm">{cartItems.length} product{cartItems.length !== 1 ? 's' : ''} added</p>
+            <p className="text-emerald-100 text-sm">
+              {cartItems.length} product{cartItems.length !== 1 ? "s" : ""} added
+            </p>
           </div>
           <button
             type="button"
@@ -33,7 +35,6 @@ function CartFlyout({ isCustomer }) {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-h-96 overflow-y-auto">
         {cartItems.length === 0 ? (
           <div className="p-8 text-center">
@@ -50,7 +51,6 @@ function CartFlyout({ isCustomer }) {
             {cartItems.map((item) => (
               <div key={item._id} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                 <div className="flex space-x-4">
-                  {/* Product Image */}
                   <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                     <img
                       src={item.imageUrl}
@@ -59,7 +59,6 @@ function CartFlyout({ isCustomer }) {
                     />
                   </div>
 
-                  {/* Product Details */}
                   <div className="flex-grow min-w-0">
                     <div className="flex items-start justify-between mb-2">
                       <div className="min-w-0 flex-grow">
@@ -82,7 +81,6 @@ function CartFlyout({ isCustomer }) {
                       </button>
                     </div>
 
-                    {/* Farmer Info */}
                     <div className="flex items-center text-xs text-gray-600 mb-2">
                       <svg className="w-3 h-3 mr-1 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -90,11 +88,11 @@ function CartFlyout({ isCustomer }) {
                       {item.farmerId?.name || "Unknown farmer"}
                     </div>
 
-                    {/* Price and Quantity Controls */}
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-emerald-600 text-sm">Rs. {item.price}</span>
+                      <span className="font-bold text-emerald-600 text-sm">
+                        {formatPriceWithUnit(item.price, item)}
+                      </span>
 
-                      {/* Quantity Controls */}
                       <div className="flex items-center space-x-2">
                         <button
                           type="button"
@@ -108,7 +106,9 @@ function CartFlyout({ isCustomer }) {
                           </svg>
                         </button>
 
-                        <span className="w-8 text-center font-semibold text-sm">{item.quantityInCart}</span>
+                        <span className="min-w-[4rem] text-center font-semibold text-sm">
+                          {formatQuantityWithUnit(item.quantityInCart, item)}
+                        </span>
 
                         <button
                           type="button"
@@ -124,10 +124,11 @@ function CartFlyout({ isCustomer }) {
                       </div>
                     </div>
 
-                    {/* Subtotal */}
                     <div className="text-right mt-2">
                       <span className="text-xs text-gray-500">Subtotal: </span>
-                      <span className="font-semibold text-gray-900 text-sm">Rs. {item.price * item.quantityInCart}</span>
+                      <span className="font-semibold text-gray-900 text-sm">
+                        Rs. {item.price * item.quantityInCart}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -137,7 +138,6 @@ function CartFlyout({ isCustomer }) {
         )}
       </div>
 
-      {/* Footer */}
       {cartItems.length > 0 && (
         <div className="border-t border-gray-200 p-4 bg-gray-50">
           <div className="flex items-center justify-between mb-4">

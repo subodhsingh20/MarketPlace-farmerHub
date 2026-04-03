@@ -27,7 +27,7 @@ const getNearestFarmers = async (req, res) => {
 
     const farmerIds = farmers.map((farmer) => farmer._id);
     const products = await Product.find({ farmerId: { $in: farmerIds } })
-      .select("name price quantity category imageUrl farmerId location")
+      .select("name price quantity unit category imageUrl farmerId location")
       .sort({ createdAt: -1 });
 
     const productsByFarmer = new Map();
@@ -57,6 +57,7 @@ const getNearestFarmers = async (req, res) => {
         name: product.name,
         price: product.price,
         quantity: product.quantity,
+        unit: product.unit,
         category: product.category,
         imageUrl: product.imageUrl,
         location: product.location,

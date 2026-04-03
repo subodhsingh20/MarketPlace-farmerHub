@@ -5,7 +5,9 @@ import { useAuth } from "./AuthContext";
 const SocketContext = createContext(null);
 const defaultSocketUrl =
   typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.hostname}:5000`
+    ? ["localhost", "127.0.0.1"].includes(window.location.hostname)
+      ? `${window.location.protocol}//${window.location.hostname}:5000`
+      : window.location.origin
     : "http://localhost:5000";
 
 export function SocketProvider({ children }) {
