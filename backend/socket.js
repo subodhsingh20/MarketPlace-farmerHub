@@ -12,19 +12,13 @@ const {
   getRoomId,
   markConversationAsRead,
 } = require("./services/chatService");
-
-const DEFAULT_CLIENT_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"];
-const configuredClientOrigins = String(process.env.CLIENT_URL || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-const allowedOrigins = [...new Set([...DEFAULT_CLIENT_ORIGINS, ...configuredClientOrigins])];
+const { isAllowedOrigin } = require("./utils/corsOrigins");
 
 const initializeSocket = (server) => {
   const io = new Server(server, {
     cors: {
       origin(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (isAllowedOrigin(origin)) {
           return callback(null, true);
         }
 
