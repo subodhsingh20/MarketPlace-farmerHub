@@ -16,7 +16,11 @@ const { initializeSocket } = require("./socket");
 const { setIo } = require("./socketInstance");
 const { protect } = require("./middleware/authMiddleware");
 const { requestLogger } = require("./middleware/requestLogger");
-const { isAllowedOrigin } = require("./utils/corsOrigins");
+const {
+  CLIENT_ORIGIN_ENV_KEYS,
+  getAllowedOrigins,
+  isAllowedOrigin,
+} = require("./utils/corsOrigins");
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 dotenv.config({ path: path.resolve(__dirname, ".env"), override: true });
@@ -38,6 +42,7 @@ app.use(
         return callback(null, true);
       }
 
+      console.warn(`Blocked CORS origin: ${origin || "unknown"}`);
       return callback(new Error("CORS origin not allowed."));
     },
     credentials: true,
@@ -76,14 +81,27 @@ app.get("/api/protected", protect, (req, res) => {
   });
 });
 
+app.use((error, _req, res, next) => {
+  if (error?.message === "CORS origin not allowed.") {
+    return res.status(403).json({
+      message: "CORS origin not allowed.",
+      allowedOrigins: getAllowedOrigins(),
+    });
+  }
+
+  return next(error);
+});
+
 const startServer = async () => {
   try {
     if (!process.env.JWT_SECRET) {
       console.warn("JWT_SECRET is not set. Falling back to the development secret.");
     }
 
-    if (!process.env.CLIENT_URL) {
-      console.warn("CLIENT_URL is not set. Socket CORS will default to http://localhost:3000.");
+    if (!CLIENT_ORIGIN_ENV_KEYS.some((envKey) => process.env[envKey])) {
+      console.warn(
+        "No client origin environment variable is set. CORS will default to localhost origins."
+      );
     }
 
     if (!process.env.MONGODB_URI) {

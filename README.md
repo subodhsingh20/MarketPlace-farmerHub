@@ -35,6 +35,8 @@ Copy [backend/.env.example](backend/.env.example) and set:
 CLIENT_URL=http://localhost:3000,http://your-server-ip
 ```
 
+The backend also accepts `CLIENT_ORIGIN` or `CORS_ALLOWED_ORIGINS` as aliases if you prefer those names in your deployment platform.
+
 ### Frontend
 
 Copy [frontend/.env.example](frontend/.env.example) and set:
@@ -85,7 +87,7 @@ This project is set up for a GitHub-to-Docker pipeline using GitHub Actions and 
 The workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
 
 - builds the backend image from `backend/Dockerfile`
-- builds the frontend image from `frontend/Dockerfile`
+- builds the frontend image from `frontend/Dockerfile` using GitHub Actions build arguments
 - pushes both images to Docker Hub on pushes to `main`
 - validates that images still build on pull requests without pushing
 
@@ -111,17 +113,25 @@ Set these on the server that runs Docker Compose:
 
 - `MONGODB_URI`
 - `JWT_SECRET`
+- `CLIENT_URL`
 - `PAYMENT_MODE`
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
 
-If your frontend is served from a custom domain or IP and the backend needs strict CORS, set `CLIENT_URL` in the backend environment to the frontend origin.
+Set `CLIENT_URL` to the exact browser origin of your frontend, for example `https://yourdomain.com`. If you have multiple frontend origins, provide a comma-separated list.
 
 ### Example Backend CORS Value
 
 ```env
 CLIENT_URL=http://localhost:3000,http://your-server-ip
 ```
+
+### GitHub Repository Variables And Secrets
+
+Set these in GitHub before pushing to `main`, so the frontend Docker image is built with the correct production API endpoints:
+
+- Repository variables: `REACT_APP_API_URL`, `REACT_APP_SOCKET_URL`, `REACT_APP_PAYMENT_MODE`, `REACT_APP_PAYMENT_GATEWAY_URL`
+- Repository secret: `REACT_APP_RAZORPAY_KEY_ID`
 
 ## Recommended Next Enhancements
 
