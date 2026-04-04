@@ -126,17 +126,5 @@ Set `CLIENT_URL` to the exact browser origin of your frontend, for example `http
 CLIENT_URL=http://localhost:3000,http://your-server-ip
 ```
 
-### GitHub Repository Variables And Secrets
 
-Set these in GitHub before pushing to `main`, so the frontend Docker image is built with the correct production API endpoints:
 
-- Repository variables: `REACT_APP_API_URL`, `REACT_APP_SOCKET_URL`, `REACT_APP_PAYMENT_MODE`, `REACT_APP_PAYMENT_GATEWAY_URL`
-- Repository secret: `REACT_APP_RAZORPAY_KEY_ID`
-
-## Recommended Next Enhancements
-
-- Add real backend and frontend test coverage for auth, orders, cart, and checkout
-- Add centralized input validation with a schema library
-- Add rate limiting and security headers for production API traffic
-- Add a CI workflow that runs backend checks and frontend build on each push
-- Add image upload/storage instead of relying on pasted image URLs
