@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: farmer-marketplace-backend
-    env: docker
-    rootDir: .
-    dockerfilePath: backend/Dockerfile
-    autoDeploy: true
-    healthCheckPath: /api/health

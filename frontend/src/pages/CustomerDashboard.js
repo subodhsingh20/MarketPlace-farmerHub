@@ -256,7 +256,7 @@ function CustomerDashboard() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-            <div className="space-y-8 xl:col-span-2">
+            <div className="space-y-6 xl:col-span-3">
               <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-gray-900">Your Cart</h2>
@@ -303,9 +303,6 @@ function CustomerDashboard() {
                 )}
               </div>
 
-            </div>
-
-            <div className="space-y-8">
               <SelectAddressSection
                 addresses={addresses}
                 selectedAddressId={selectedAddressId}
