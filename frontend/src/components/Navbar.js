@@ -35,6 +35,11 @@ function Navbar() {
       label: "Dashboard"
     });
 
+    navLinks.push({
+      to: "/orders",
+      label: "Orders"
+    });
+
     // Provide quick access to messaging for all signed-in users
     navLinks.push({
       to: "/chat",
