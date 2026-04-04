@@ -5,6 +5,11 @@ services:
       - "5000:5000"
     environment:
       - MONGODB_URI=${MONGODB_URI}
+      - CLIENT_URL=${CLIENT_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - PAYMENT_MODE=${PAYMENT_MODE:-live}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
       - NODE_ENV=production
     networks:
       - app-network
@@ -14,9 +19,6 @@ services:
     image: subodhsingh20/farmer-marketplace-frontend:latest
     ports:
       - "80:80"
-    environment:
-      - REACT_APP_API_URL=http://backend:5000/api
-      - REACT_APP_SOCKET_URL=http://backend:5000
     depends_on:
       - backend
     networks:

@@ -52,6 +52,12 @@ jobs:
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
+          build-args: |
+            REACT_APP_API_URL=${{ vars.REACT_APP_API_URL }}
+            REACT_APP_SOCKET_URL=${{ vars.REACT_APP_SOCKET_URL }}
+            REACT_APP_PAYMENT_MODE=${{ vars.REACT_APP_PAYMENT_MODE }}
+            REACT_APP_RAZORPAY_KEY_ID=${{ secrets.REACT_APP_RAZORPAY_KEY_ID }}
+            REACT_APP_PAYMENT_GATEWAY_URL=${{ vars.REACT_APP_PAYMENT_GATEWAY_URL }}
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
