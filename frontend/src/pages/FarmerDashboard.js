@@ -16,7 +16,6 @@ import {
   deleteProduct,
   getFarmerOrders,
   getProductsByFarmer,
-  updateOrderStatus,
   updateProduct,
 } from "../services/authService";
 
@@ -57,9 +56,6 @@ function FarmerDashboard() {
   const [successMessage, setSuccessMessage] = useState("");
   const editFormRef = useRef(null);
 
-  const activeOrders = orders.filter(
-    (order) => !["completed", "cancelled"].includes(order.status)
-  );
   const orderHistory = orders.filter((order) =>
     ["completed", "cancelled"].includes(order.status)
   );
@@ -295,28 +291,6 @@ function FarmerDashboard() {
     }
   };
 
-  const handleOrderStatusChange = async (orderId, status) => {
-    try {
-      const response = await updateOrderStatus(orderId, status);
-      setOrders((current) =>
-        current.map((order) => (order._id === orderId ? response.data.order : order))
-      );
-      const analyticsResponse = await getFarmerAnalytics();
-      setAnalytics(analyticsResponse.data.analytics || {});
-      setSuccessMessage(
-        status === "completed"
-          ? "Order completed and saved in order history."
-          : status === "cancelled"
-            ? "Order cancelled and saved in order history."
-            : "Order status updated successfully."
-      );
-    } catch (requestError) {
-      setError(
-        requestError.response?.data?.message || "Failed to update order status."
-      );
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
       <FadeIn>
@@ -413,100 +387,6 @@ function FarmerDashboard() {
                     <p className="text-xl font-bold text-orange-900 sm:text-2xl">{analytics.pendingOrders || 0}</p>
                     <p className="text-xs text-orange-600 mt-1">Orders awaiting action</p>
                   </div>
-                </div>
-              </FadeIn>
-
-              {/* Recent Customer Orders */}
-              <FadeIn delay={0.3}>
-                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900">Active Orders</h2>
-                    <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full">
-                      {activeOrders.length} active
-                    </span>
-                  </div>
-
-                  {activeOrders.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No active orders right now</h3>
-                      <p className="text-gray-600">New customer orders will appear here, and completed or cancelled ones will move into order history.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {activeOrders.slice(0, 4).map((order) => (
-                        <div key={order._id} className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="min-w-0">
-                              <p className="font-semibold text-gray-900">
-                                Order #{String(order._id).slice(-6)}
-                              </p>
-                              <p className="mt-1 text-sm text-gray-600">
-                                Customer: {order.userId?.name || "Customer"}
-                              </p>
-                              <p className="mt-1 text-sm text-gray-600">
-                                {order.products?.length || 0} product{order.products?.length === 1 ? "" : "s"} in this order
-                              </p>
-                              <p className="mt-1 text-xs text-gray-500">
-                                {new Date(order.createdAt).toLocaleString()}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
-                                order.status === "completed"
-                                  ? "bg-green-100 text-green-800"
-                                  : order.status === "confirmed"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : order.status === "cancelled"
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-yellow-100 text-yellow-800"
-                              }`}>
-                                {order.status}
-                              </span>
-                              <p className="mt-3 text-lg font-bold text-emerald-700">
-                                Rs. {getOrderEarning(order)}
-                              </p>
-                              <p className="mt-1 text-xs text-gray-500">
-                                Payment: {order.paymentStatus}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleOrderStatusChange(order._id, "confirmed")}
-                              className="rounded-lg bg-blue-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600"
-                            >
-                              Confirm
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOrderStatusChange(order._id, "completed")}
-                              className="rounded-lg bg-green-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-green-600"
-                            >
-                              Complete
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOrderStatusChange(order._id, "cancelled")}
-                              className="rounded-lg bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {activeOrders.length > 4 && (
-                        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                          Showing the latest 4 active orders here. See the full `Received Orders` section below for the full active list.
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               </FadeIn>
 
@@ -779,7 +659,7 @@ function FarmerDashboard() {
                 </div>
               </FadeIn>
 
-              {/* Order History */}
+              {false && (
               <FadeIn delay={0.6}>
                 <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
@@ -929,6 +809,7 @@ function FarmerDashboard() {
                   )}
                 </div>
               </FadeIn>
+              )}
             </div>
 
             {/* Sidebar */}

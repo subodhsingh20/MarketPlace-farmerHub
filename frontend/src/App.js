@@ -8,7 +8,9 @@ import PublicPageLayout from "./components/PublicPageLayout";
 import ScrollToTop from "./components/ScrollToTop";
 import Chat from "./pages/Chat";
 import CustomerDashboard from "./pages/CustomerDashboard";
+import CustomerOrders from "./pages/CustomerOrders";
 import FarmerDashboard from "./pages/FarmerDashboard";
+import FarmerOrders from "./pages/FarmerOrders";
 import Home from "./pages/Home";
 import InfoPage from "./pages/InfoPage";
 import Login from "./pages/Login";
@@ -46,6 +48,16 @@ function PageTransition({ pageKey, children, className }) {
       {children}
     </motion.div>
   );
+}
+
+function OrdersRoute() {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return user.role === "farmer" ? <FarmerOrders /> : <CustomerOrders />;
 }
 
 function App() {
@@ -278,6 +290,18 @@ function App() {
                               ]}
                             />
                           </PublicPageLayout>
+                        </PageTransition>
+                      }
+                    />
+                    <Route
+                      path="/orders"
+                      element={
+                        <PageTransition pageKey="orders">
+                          <main className="page-shell">
+                            <ProtectedRoute>
+                              <OrdersRoute />
+                            </ProtectedRoute>
+                          </main>
                         </PageTransition>
                       }
                     />
