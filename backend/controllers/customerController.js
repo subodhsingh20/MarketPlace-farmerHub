@@ -1,4 +1,5 @@
-const User = require("../models/User");
+const { randomUUID } = require("crypto");
+const { users } = require("../data");
 
 const REQUIRED_ADDRESS_FIELDS = ["label", "name", "street", "city", "state", "pincode"];
 
@@ -40,9 +41,21 @@ const sortAddresses = (addresses) =>
     return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
   });
 
+const createAddressRecord = (address) => {
+  const now = new Date().toISOString();
+
+  return {
+    _id: `address_${randomUUID()}`,
+    ...address,
+    createdAt: now,
+    updatedAt: now,
+    lastUsedAt: null,
+  };
+};
+
 const getCustomerAddresses = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("addresses");
+    const user = await users.findById(req.user._id);
 
     return res.status(200).json({
       addresses: sortAddresses(user?.addresses || []),
@@ -67,15 +80,20 @@ const addCustomerAddress = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await users.updateById(req.user._id, (doc) => {
+      const nextAddress = createAddressRecord(normalizedAddress);
+      return {
+        ...doc,
+        addresses: [...(doc.addresses || []), nextAddress],
+      };
+    });
 
-    user.addresses.push(normalizedAddress);
-    await user.save();
+    const newAddress = user.addresses[user.addresses.length - 1];
 
     return res.status(201).json({
       message: "Address added successfully.",
       addresses: sortAddresses(user.addresses),
-      address: user.addresses[user.addresses.length - 1],
+      address: newAddress,
     });
   } catch (error) {
     return res.status(500).json({
@@ -97,20 +115,29 @@ const updateCustomerAddress = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user._id);
-    const address = user.addresses.id(req.params.id);
+    const user = await users.findById(req.user._id);
+    const addressIndex = (user?.addresses || []).findIndex((entry) => String(entry._id) === String(req.params.id));
 
-    if (!address) {
+    if (addressIndex < 0) {
       return res.status(404).json({ message: "Address not found." });
     }
 
-    address.set(normalizedAddress);
-    await user.save();
+    const nextAddresses = [...user.addresses];
+    nextAddresses[addressIndex] = {
+      ...nextAddresses[addressIndex],
+      ...normalizedAddress,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedUser = await users.updateById(req.user._id, (doc) => ({
+      ...doc,
+      addresses: nextAddresses,
+    }));
 
     return res.status(200).json({
       message: "Address updated successfully.",
-      addresses: sortAddresses(user.addresses),
-      address,
+      addresses: sortAddresses(updatedUser.addresses),
+      address: nextAddresses[addressIndex],
     });
   } catch (error) {
     return res.status(500).json({
@@ -122,19 +149,22 @@ const updateCustomerAddress = async (req, res) => {
 
 const deleteCustomerAddress = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    const address = user.addresses.id(req.params.id);
+    const user = await users.findById(req.user._id);
+    const addresses = user?.addresses || [];
+    const address = addresses.find((entry) => String(entry._id) === String(req.params.id));
 
     if (!address) {
       return res.status(404).json({ message: "Address not found." });
     }
 
-    address.deleteOne();
-    await user.save();
+    const updatedUser = await users.updateById(req.user._id, (doc) => ({
+      ...doc,
+      addresses: addresses.filter((entry) => String(entry._id) !== String(req.params.id)),
+    }));
 
     return res.status(200).json({
       message: "Address removed successfully.",
-      addresses: sortAddresses(user.addresses),
+      addresses: sortAddresses(updatedUser.addresses),
     });
   } catch (error) {
     return res.status(500).json({

@@ -10,6 +10,7 @@ import {
   createCashOnDeliveryOrder,
   createMockPayment,
   createPaymentOrder,
+  deleteCustomerAddress,
   getCustomerAddresses,
   getUserOrders,
   verifyPayment,
@@ -46,8 +47,16 @@ function CustomerDashboard() {
   const [checkoutError, setCheckoutError] = useState("");
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [deletingAddressId, setDeletingAddressId] = useState("");
+  const [addressMessage, setAddressMessage] = useState("");
   const [orders, setOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
+
+  useEffect(() => {
+    if (!addressMessage) return undefined;
+    const timeoutId = window.setTimeout(() => setAddressMessage(""), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [addressMessage]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [addressError, setAddressError] = useState("");
 
@@ -115,6 +124,32 @@ function CustomerDashboard() {
       return null;
     } finally {
       setIsSavingAddress(false);
+    }
+  };
+
+  const handleDeleteAddress = async (addressId) => {
+    if (!addressId) return;
+    if (!window.confirm("Are you sure you want to delete this address?")) {
+      return;
+    }
+
+    try {
+      setDeletingAddressId(addressId);
+      setAddressError("");
+      setAddressMessage("");
+      const response = await deleteCustomerAddress(addressId);
+      const savedAddresses = response.data.addresses || [];
+      setAddresses(savedAddresses);
+
+      if (selectedAddressId === addressId) {
+        setSelectedAddressId(savedAddresses[0]?._id || "");
+      }
+
+      setAddressMessage("Address deleted successfully.");
+    } catch (error) {
+      setAddressError(error.response?.data?.message || "Failed to delete the address.");
+    } finally {
+      setDeletingAddressId("");
     }
   };
 
@@ -306,14 +341,18 @@ function CustomerDashboard() {
               <SelectAddressSection
                 addresses={addresses}
                 selectedAddressId={selectedAddressId}
+                deletingAddressId={deletingAddressId}
                 onSelectAddress={(addressId) => {
                   setSelectedAddressId(addressId);
                   setAddressError("");
+                  setAddressMessage("");
                   setCheckoutError("");
                 }}
                 onAddAddress={handleAddAddress}
+                onDeleteAddress={handleDeleteAddress}
                 isSubmitting={isSavingAddress}
                 saveError={addressError}
+                successMessage={addressMessage}
               />
 
               <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl" id="cart-summary">

@@ -12,10 +12,13 @@ const EMPTY_ADDRESS_FORM = {
 function SelectAddressSection({
   addresses,
   selectedAddressId,
+  deletingAddressId,
   onSelectAddress,
   onAddAddress,
+  onDeleteAddress,
   isSubmitting,
   saveError,
+  successMessage,
 }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formValues, setFormValues] = useState(EMPTY_ADDRESS_FORM);
@@ -86,46 +89,68 @@ function SelectAddressSection({
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {addresses.map((address) => {
               const isSelected = selectedAddressId === address._id;
+              const isDeleting = deletingAddressId === address._id;
 
               return (
-                <label
+                <div
                   key={address._id}
-                  className={`cursor-pointer rounded-2xl border p-4 transition ${
+                  className={`rounded-2xl border p-4 transition ${
                     isSelected
                       ? "border-emerald-500 bg-emerald-50 shadow-md"
                       : "border-gray-200 bg-gray-50 hover:border-emerald-300 hover:bg-white"
                   }`}
                 >
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="radio"
-                      name="selected-address"
-                      className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
-                      checked={isSelected}
-                      onChange={() => onSelectAddress(address._id)}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
-                          {address.label}
-                        </span>
-                        {isSelected && (
-                          <span className="text-xs font-semibold text-emerald-700">
-                            Selected
-                          </span>
-                        )}
+                  <div className="flex items-start justify-between gap-4">
+                    <label className="flex-1 cursor-pointer">
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="radio"
+                          name="selected-address"
+                          className="mt-1 h-4 w-4 text-emerald-600 focus:ring-emerald-500"
+                          checked={isSelected}
+                          onChange={() => onSelectAddress(address._id)}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                              {address.label}
+                            </span>
+                            {isSelected && (
+                              <span className="text-xs font-semibold text-emerald-700">
+                                Selected
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-3 font-semibold text-gray-900">{address.name}</p>
+                          <p className="mt-1 text-sm leading-6 text-gray-600">
+                            {address.street}
+                            <br />
+                            {address.city}, {address.state} - {address.pincode}
+                          </p>
+                        </div>
                       </div>
-                      <p className="mt-3 font-semibold text-gray-900">{address.name}</p>
-                      <p className="mt-1 text-sm leading-6 text-gray-600">
-                        {address.street}
-                        <br />
-                        {address.city}, {address.state} - {address.pincode}
-                      </p>
-                    </div>
+                    </label>
+                    <button
+                      type="button"
+                      className="mt-1 inline-flex items-center rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDeleteAddress(address._id);
+                      }}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </button>
                   </div>
-                </label>
+                </div>
               );
             })}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
+            {successMessage}
           </div>
         )}
 

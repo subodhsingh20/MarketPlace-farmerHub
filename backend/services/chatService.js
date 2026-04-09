@@ -1,8 +1,10 @@
-const mongoose = require("mongoose");
-const ChatMessage = require("../models/ChatMessage");
-const Order = require("../models/Order");
-const Product = require("../models/Product");
-const User = require("../models/User");
+const { chatMessages, orders, products, users } = require("../data");
+const {
+  hydrateChatMessage,
+  toDateIso,
+  toId,
+  toPublicUser,
+} = require("../data/hydrators");
 
 const getRoomId = (firstUserId, secondUserId) =>
   [String(firstUserId), String(secondUserId)].sort().join("__");
@@ -22,12 +24,10 @@ const formatChatMessage = (message) => ({
   message: message.message || message.text,
   text: message.message || message.text,
   imageUrl: message.imageUrl || null,
-  timestamp: (message.timestamp || message.createdAt || new Date()).toISOString(),
+  timestamp: toDateIso(message.timestamp || message.createdAt || new Date()),
   readStatus: Boolean(message.readStatus),
-  readAt: message.readAt ? new Date(message.readAt).toISOString() : null,
+  readAt: toDateIso(message.readAt),
 });
-
-const isValidObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value || ""));
 
 const getParticipantContext = (sender, recipient) => {
   if (!sender || !recipient || sender.role === recipient.role) {
@@ -52,7 +52,7 @@ const getParticipantContext = (sender, recipient) => {
 };
 
 const getFarmerProductIds = async (farmerId) => {
-  const farmerProducts = await Product.find({ farmerId }).select("_id");
+  const farmerProducts = await products.find({ farmerId: String(farmerId) });
   return farmerProducts.map((product) => product._id);
 };
 
@@ -70,23 +70,23 @@ const findRelatedOrderId = async ({ sender, recipient, requestedOrderId }) => {
     return null;
   }
 
-  const orderQuery = {
-    userId: customerId,
-    "products.productId": { $in: farmerProductIds },
-  };
+  const customerOrders = await orders.find({ userId: String(customerId) }, { sort: [{ createdAt: -1 }] });
 
-  if (requestedOrderId && isValidObjectId(requestedOrderId)) {
-    const matchingOrder = await Order.findOne({
-      ...orderQuery,
-      _id: requestedOrderId,
-    }).select("_id");
+  const matchesFarmerOrder = (order) =>
+    Array.isArray(order.products) &&
+    order.products.some((item) => farmerProductIds.includes(toId(item.productId)));
 
-    return matchingOrder?._id || null;
+  if (requestedOrderId) {
+    const matchingOrder = customerOrders.find(
+      (order) => String(order._id) === String(requestedOrderId) && matchesFarmerOrder(order)
+    );
+
+    if (matchingOrder) {
+      return matchingOrder._id;
+    }
   }
 
-  const latestOrder = await Order.findOne(orderQuery)
-    .sort({ createdAt: -1 })
-    .select("_id");
+  const latestOrder = customerOrders.find(matchesFarmerOrder);
 
   return latestOrder?._id || null;
 };
@@ -105,76 +105,99 @@ const createChatMessage = async ({ sender, recipient, text, orderId, imageUrl })
     requestedOrderId: orderId,
   });
 
-  const message = await ChatMessage.create({
+  const message = await chatMessages.create({
     senderId: sender._id,
     receiverId: recipient._id,
     orderId: resolvedOrderId,
     message: normalizedText,
     imageUrl: normalizedImageUrl,
-    timestamp: new Date(),
+    timestamp: new Date().toISOString(),
     readStatus: false,
+    readAt: null,
   });
 
-  return ChatMessage.findById(message._id)
-    .populate("senderId", "name role")
-    .populate("receiverId", "name role")
-    .populate("orderId", "_id");
+  const order = resolvedOrderId ? await orders.findById(resolvedOrderId) : null;
+
+  return hydrateChatMessage(message, {
+    sender: toPublicUser(sender),
+    receiver: toPublicUser(recipient),
+    order,
+  });
 };
 
 const getConversationHistory = async ({ currentUserId, otherUserId, orderId }) => {
-  const query = {
-    $or: [
-      { senderId: currentUserId, receiverId: otherUserId },
-      { senderId: otherUserId, receiverId: currentUserId },
-    ],
-  };
+  const messages = await chatMessages.find(
+    {
+      $or: [
+        { senderId: String(currentUserId), receiverId: String(otherUserId) },
+        { senderId: String(otherUserId), receiverId: String(currentUserId) },
+      ],
+      ...(orderId ? { orderId: String(orderId) } : {}),
+    },
+    { sort: [{ timestamp: 1 }, { createdAt: 1 }] }
+  );
 
-  if (orderId && isValidObjectId(orderId)) {
-    query.orderId = orderId;
-  }
+  const participantIds = new Set();
+  const orderIds = new Set();
 
-  return ChatMessage.find(query)
-    .populate("senderId", "name role")
-    .populate("receiverId", "name role")
-    .populate("orderId", "_id")
-    .sort({ timestamp: 1, createdAt: 1 });
+  messages.forEach((message) => {
+    participantIds.add(String(message.senderId));
+    participantIds.add(String(message.receiverId));
+
+    if (message.orderId) {
+      orderIds.add(String(message.orderId));
+    }
+  });
+
+  const userDocs = await Promise.all(Array.from(participantIds).map((id) => users.findById(id)));
+  const userMap = new Map(userDocs.filter(Boolean).map((doc) => [String(doc._id), toPublicUser(doc)]));
+
+  const orderDocs = await Promise.all(Array.from(orderIds).map((id) => orders.findById(id)));
+  const orderMap = new Map(orderDocs.filter(Boolean).map((doc) => [String(doc._id), doc]));
+
+  return messages.map((message) =>
+    hydrateChatMessage(message, {
+      sender: userMap.get(String(message.senderId)),
+      receiver: userMap.get(String(message.receiverId)),
+      order: message.orderId ? orderMap.get(String(message.orderId)) : null,
+    })
+  );
 };
 
 const markConversationAsRead = async ({ currentUserId, otherUserId, orderId }) => {
-  const query = {
-    senderId: otherUserId,
-    receiverId: currentUserId,
-    readStatus: false,
-  };
-
-  if (orderId && isValidObjectId(orderId)) {
-    query.orderId = orderId;
-  }
-
-  const result = await ChatMessage.updateMany(query, {
-    $set: {
-      readStatus: true,
-      readAt: new Date(),
+  const updated = await chatMessages.updateMany(
+    {
+      senderId: String(otherUserId),
+      receiverId: String(currentUserId),
+      readStatus: false,
+      ...(orderId ? { orderId: String(orderId) } : {}),
     },
-  });
+    (doc) => ({
+      ...doc,
+      readStatus: true,
+      readAt: new Date().toISOString(),
+    })
+  );
 
-  return result.modifiedCount || 0;
+  return updated.modifiedCount || 0;
 };
 
 const deleteConversation = async ({ currentUserId, otherUserId }) =>
-  ChatMessage.deleteMany({
+  chatMessages.deleteMany({
     $or: [
-      { senderId: currentUserId, receiverId: otherUserId },
-      { senderId: otherUserId, receiverId: currentUserId },
+      { senderId: String(currentUserId), receiverId: String(otherUserId) },
+      { senderId: String(otherUserId), receiverId: String(currentUserId) },
     ],
   });
 
 const findChatRecipient = async (recipientId) => {
-  if (!isValidObjectId(recipientId)) {
+  const user = await users.findById(recipientId);
+
+  if (!user) {
     return null;
   }
 
-  return User.findById(recipientId).select("name role");
+  return toPublicUser(user);
 };
 
 module.exports = {

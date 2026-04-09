@@ -1,31 +1,14 @@
 const crypto = require("crypto");
-const Order = require("../models/Order");
-const Product = require("../models/Product");
+const { orders, products, users } = require("../data");
 const { emitOrderAlert } = require("../socket");
 const { getIo } = require("../socketInstance");
-const User = require("../models/User");
+const {
+  mergeRequestedProducts,
+  populateOrder,
+  reserveOrderStock,
+} = require("../services/orderService");
 
 const DEFAULT_PAYMENT_MODE = process.env.PAYMENT_MODE === "live" ? "live" : "test";
-
-const mergeRequestedProducts = (products) => {
-  const mergedProducts = new Map();
-
-  for (const item of products) {
-    const productId = String(item.productId);
-    const quantity = Number(item.quantity);
-
-    if (!mergedProducts.has(productId)) {
-      mergedProducts.set(productId, {
-        productId,
-        quantity: 0,
-      });
-    }
-
-    mergedProducts.get(productId).quantity += quantity;
-  }
-
-  return Array.from(mergedProducts.values());
-};
 
 const normalizeSelectedAddress = (address) => ({
   addressId: address._id || address.addressId || null,
@@ -39,17 +22,33 @@ const normalizeSelectedAddress = (address) => ({
 
 const getValidatedAddressData = async (userId, selectedAddressId, selectedAddress) => {
   if (selectedAddressId) {
-    const user = await User.findById(userId).select("addresses");
-    const savedAddress = user?.addresses?.id(selectedAddressId);
+    const user = await users.findById(userId);
 
-    if (!savedAddress) {
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    const addressIndex = (user?.addresses || []).findIndex(
+      (entry) => String(entry._id) === String(selectedAddressId)
+    );
+
+    if (addressIndex < 0) {
       throw new Error("Selected address was not found.");
     }
 
-    savedAddress.lastUsedAt = new Date();
-    await user.save();
+    const updatedAddresses = [...user.addresses];
+    updatedAddresses[addressIndex] = {
+      ...updatedAddresses[addressIndex],
+      lastUsedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-    return normalizeSelectedAddress(savedAddress.toObject());
+    await users.updateById(userId, (doc) => ({
+      ...doc,
+      addresses: updatedAddresses,
+    }));
+
+    return normalizeSelectedAddress(updatedAddresses[addressIndex]);
   }
 
   const normalizedAddress = normalizeSelectedAddress(selectedAddress || {});
@@ -71,12 +70,12 @@ const getValidatedAddressData = async (userId, selectedAddressId, selectedAddres
 
 const getValidatedOrderData = async (
   userId,
-  products,
+  requestedProducts,
   fulfillmentType,
   selectedAddressId,
   selectedAddress
 ) => {
-  if (!Array.isArray(products) || products.length === 0) {
+  if (!Array.isArray(requestedProducts) || requestedProducts.length === 0) {
     throw new Error("Order must include products.");
   }
 
@@ -84,11 +83,13 @@ const getValidatedOrderData = async (
     throw new Error("Fulfillment type must be either pickup or delivery.");
   }
 
-  const mergedProducts = mergeRequestedProducts(products);
+  const mergedProducts = mergeRequestedProducts(requestedProducts);
   const productIds = mergedProducts.map((item) => item.productId);
-  const foundProducts = await Product.find({ _id: { $in: productIds } });
+  const foundProducts = await Promise.all(
+    [...new Set(productIds)].map((productId) => products.findById(productId))
+  );
   const foundProductMap = new Map(
-    foundProducts.map((product) => [product._id.toString(), product])
+    foundProducts.filter(Boolean).map((product) => [String(product._id), product])
   );
 
   const normalizedProducts = [];
@@ -117,7 +118,7 @@ const getValidatedOrderData = async (
       unit: product.unit,
     });
 
-      totalPrice += product.price * quantity;
+    totalPrice += product.price * quantity;
   }
 
   const shippingAddress = await getValidatedAddressData(
@@ -130,16 +131,13 @@ const getValidatedOrderData = async (
 };
 
 const emitPaidOrderAlert = async (order, userId, message) => {
-  const populatedOrder = await Order.findById(order._id)
-    .populate("userId", "name email phone role")
-    .populate("products.productId", "name imageUrl category farmerId");
-
+  const populatedOrder = await populateOrder(order);
   const farmerIds = [
     ...new Set(
       populatedOrder.products
         .map((item) => item.productId?.farmerId)
         .filter(Boolean)
-        .map((farmerId) => String(farmerId))
+        .map((farmerId) => String(farmerId._id || farmerId))
     ),
   ];
 
@@ -153,22 +151,6 @@ const emitPaidOrderAlert = async (order, userId, message) => {
   });
 
   return populatedOrder;
-};
-
-const reserveOrderStock = async (order) => {
-  for (const item of order.products) {
-    const product = await Product.findById(item.productId);
-
-    if (!product || product.quantity < item.quantity) {
-      throw new Error("Product stock changed before order confirmation.");
-    }
-  }
-
-  for (const item of order.products) {
-    await Product.findByIdAndUpdate(item.productId, {
-      $inc: { quantity: -item.quantity },
-    });
-  }
 };
 
 const finalizeOrderPayment = async ({
@@ -185,38 +167,28 @@ const finalizeOrderPayment = async ({
     };
   }
 
-  for (const item of order.products) {
-    const product = await Product.findById(item.productId);
+  await reserveOrderStock(order);
 
-    if (!product || product.quantity < item.quantity) {
-      order.paymentStatus = "failed";
-      await order.save();
+  const updatedOrder = await orders.updateById(order._id, (doc) => {
+    const nextOrder = {
+      ...doc,
+      paymentStatus: "paid",
+      status: "pending",
+      paymentReference,
+      paymentProvider,
+      paymentMode,
+    };
 
-      throw new Error("Product stock changed before payment confirmation.");
+    if (paymentProvider === "razorpay") {
+      nextOrder.razorpayPaymentId = paymentReference;
     }
-  }
 
-  for (const item of order.products) {
-    await Product.findByIdAndUpdate(item.productId, {
-      $inc: { quantity: -item.quantity },
-    });
-  }
-
-  order.paymentStatus = "paid";
-  order.status = "pending";
-  order.paymentReference = paymentReference;
-  order.paymentProvider = paymentProvider;
-  order.paymentMode = paymentMode;
-
-  if (paymentProvider === "razorpay") {
-    order.razorpayPaymentId = paymentReference;
-  }
-
-  await order.save();
+    return nextOrder;
+  });
 
   return {
     alreadyPaid: false,
-    order: await emitPaidOrderAlert(order, order.userId, successMessage),
+    order: await emitPaidOrderAlert(updatedOrder, updatedOrder.userId, successMessage),
   };
 };
 
@@ -278,7 +250,7 @@ const createPaymentOrder = async (req, res) => {
       });
     }
 
-    const order = await Order.create({
+    const order = await orders.create({
       userId: req.user._id,
       products: normalizedProducts,
       totalPrice,
@@ -341,9 +313,9 @@ const verifyPayment = async (req, res) => {
       });
     }
 
-    const order = await Order.findOne({
+    const order = await orders.findOne({
       razorpayOrderId,
-      userId: req.user._id,
+      userId: String(req.user._id),
     });
 
     if (!order) {
@@ -385,7 +357,7 @@ const mockPayment = async (req, res) => {
 
     const transactionId = String(Date.now());
 
-    const order = await Order.create({
+    const order = await orders.create({
       userId: req.user._id,
       products: normalizedProducts,
       totalPrice,
@@ -429,7 +401,7 @@ const createCashOnDeliveryOrder = async (req, res) => {
       selectedAddress
     );
 
-    const order = await Order.create({
+    const order = await orders.create({
       userId: req.user._id,
       products: normalizedProducts,
       totalPrice,
@@ -443,16 +415,13 @@ const createCashOnDeliveryOrder = async (req, res) => {
 
     await reserveOrderStock(order);
 
-    const populatedOrder = await Order.findById(order._id)
-      .populate("userId", "name email phone role")
-      .populate("products.productId", "name imageUrl category farmerId");
-
+    const populatedOrder = await populateOrder(order);
     const farmerIds = [
       ...new Set(
         populatedOrder.products
           .map((item) => item.productId?.farmerId)
           .filter(Boolean)
-          .map((farmerId) => String(farmerId))
+          .map((farmerId) => String(farmerId._id || farmerId))
       ),
     ];
 
