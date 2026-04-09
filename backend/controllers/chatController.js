@@ -1,4 +1,5 @@
-const { getIo } = require("../socketInstance");
+const { chatMessages, users } = require("../data");
+const { toDateIso, toPublicUser } = require("../data/hydrators");
 const {
   createChatMessage,
   deleteConversation,
@@ -8,6 +9,7 @@ const {
   getRoomId,
   markConversationAsRead,
 } = require("../services/chatService");
+const { getIo } = require("../socketInstance");
 
 const emitChatEvents = ({ sender, recipient, chatMessage }) => {
   const io = getIo();
@@ -173,40 +175,47 @@ const getChatHistory = async (req, res) => {
 
 const getChatConversations = async (req, res) => {
   try {
-    const ChatMessage = require("../models/ChatMessage");
-    const conversations = await ChatMessage.find({
-      $or: [{ senderId: req.user._id }, { receiverId: req.user._id }],
-    })
-      .populate("senderId", "name role")
-      .populate("receiverId", "name role")
-      .sort({ timestamp: -1, createdAt: -1 });
+    const conversations = await chatMessages.find(
+      {
+        $or: [{ senderId: String(req.user._id) }, { receiverId: String(req.user._id) }],
+      },
+      { sort: [{ timestamp: -1 }, { createdAt: -1 }] }
+    );
 
     const latestByUser = new Map();
+    const userIds = new Set();
 
     conversations.forEach((entry) => {
-      const otherUser =
-        String(entry.senderId?._id || entry.senderId) === String(req.user._id)
-          ? entry.receiverId
-          : entry.senderId;
+      userIds.add(String(entry.senderId));
+      userIds.add(String(entry.receiverId));
+    });
 
-      if (!otherUser?._id) {
+    const userDocs = await Promise.all(Array.from(userIds).map((id) => users.findById(id)));
+    const userMap = new Map(userDocs.filter(Boolean).map((doc) => [String(doc._id), toPublicUser(doc)]));
+
+    conversations.forEach((entry) => {
+      const senderId = String(entry.senderId);
+      const receiverId = String(entry.receiverId);
+      const otherUserId = senderId === String(req.user._id) ? receiverId : senderId;
+      const otherUser = userMap.get(otherUserId);
+
+      if (!otherUser) {
         return;
       }
 
-      const key = String(otherUser._id);
       const isUnread =
-        String(entry.receiverId?._id || entry.receiverId) === String(req.user._id) &&
+        receiverId === String(req.user._id) &&
         !entry.readStatus;
 
-      if (!latestByUser.has(key)) {
-        latestByUser.set(key, {
-          userId: key,
+      if (!latestByUser.has(otherUserId)) {
+        latestByUser.set(otherUserId, {
+          userId: otherUserId,
           name: otherUser.name || "User",
           role: otherUser.role || "",
           lastMessage: entry.message,
           lastMessageType: entry.imageUrl && !entry.message ? "image" : "text",
           imageUrl: entry.imageUrl || null,
-          timestamp: (entry.timestamp || entry.createdAt).toISOString(),
+          timestamp: toDateIso(entry.timestamp || entry.createdAt),
           unreadCount: isUnread ? 1 : 0,
           readStatus: Boolean(entry.readStatus),
         });
@@ -214,8 +223,8 @@ const getChatConversations = async (req, res) => {
       }
 
       if (isUnread) {
-        const existingConversation = latestByUser.get(key);
-        latestByUser.set(key, {
+        const existingConversation = latestByUser.get(otherUserId);
+        latestByUser.set(otherUserId, {
           ...existingConversation,
           unreadCount: (existingConversation.unreadCount || 0) + 1,
         });

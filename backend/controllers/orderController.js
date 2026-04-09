@@ -1,33 +1,17 @@
-const Order = require("../models/Order");
-const Product = require("../models/Product");
+const { orders, products } = require("../data");
 const { emitOrderAlert } = require("../socket");
 const { getIo } = require("../socketInstance");
-
-const mergeRequestedProducts = (products) => {
-  const mergedProducts = new Map();
-
-  for (const item of products) {
-    const productId = String(item.productId);
-    const quantity = Number(item.quantity);
-
-    if (!mergedProducts.has(productId)) {
-      mergedProducts.set(productId, {
-        productId,
-        quantity: 0,
-      });
-    }
-
-    mergedProducts.get(productId).quantity += quantity;
-  }
-
-  return Array.from(mergedProducts.values());
-};
+const {
+  getOrdersForFarmer,
+  mergeRequestedProducts,
+  populateOrder,
+} = require("../services/orderService");
 
 const placeOrder = async (req, res) => {
   try {
-    const { products, fulfillmentType, shippingAddress } = req.body;
+    const { products: requestedProducts, fulfillmentType, shippingAddress } = req.body;
 
-    if (!Array.isArray(products) || products.length === 0) {
+    if (!Array.isArray(requestedProducts) || requestedProducts.length === 0) {
       return res.status(400).json({ message: "Order must include products." });
     }
 
@@ -43,11 +27,11 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    const mergedProducts = mergeRequestedProducts(products);
+    const mergedProducts = mergeRequestedProducts(requestedProducts);
     const productIds = mergedProducts.map((item) => item.productId);
-    const foundProducts = await Product.find({ _id: { $in: productIds } });
+    const foundProducts = await products.find({ _id: { $in: productIds } });
     const foundProductMap = new Map(
-      foundProducts.map((product) => [product._id.toString(), product])
+      foundProducts.map((product) => [String(product._id), product])
     );
 
     const normalizedProducts = [];
@@ -85,7 +69,7 @@ const placeOrder = async (req, res) => {
       totalPrice += product.price * quantity;
     }
 
-    const order = await Order.create({
+    const order = await orders.create({
       userId: req.user._id,
       products: normalizedProducts,
       totalPrice,
@@ -95,21 +79,20 @@ const placeOrder = async (req, res) => {
     });
 
     for (const item of normalizedProducts) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { quantity: -item.quantity },
-      });
+      await products.updateById(item.productId, (doc) => ({
+        ...doc,
+        quantity: Number(doc.quantity) - Number(item.quantity),
+      }));
     }
 
-    const populatedOrder = await Order.findById(order._id)
-      .populate("userId", "name email phone role")
-      .populate("products.productId", "name imageUrl category farmerId");
+    const populatedOrder = await populateOrder(order);
 
     const farmerIds = [
       ...new Set(
         populatedOrder.products
           .map((item) => item.productId?.farmerId)
           .filter(Boolean)
-          .map((farmerId) => String(farmerId))
+          .map((farmerId) => String(farmerId._id || farmerId))
       ),
     ];
 
@@ -136,11 +119,13 @@ const placeOrder = async (req, res) => {
 
 const getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user._id })
-      .populate("products.productId", "name imageUrl category farmerId")
-      .sort({ createdAt: -1 });
+    const userOrders = await orders.find(
+      { userId: String(req.user._id) },
+      { sort: [{ createdAt: -1 }] }
+    );
+    const populatedOrders = await Promise.all(userOrders.map((order) => populateOrder(order)));
 
-    return res.status(200).json({ orders });
+    return res.status(200).json({ orders: populatedOrders });
   } catch (error) {
     return res.status(500).json({
       message: "Failed to fetch user orders.",
@@ -151,29 +136,19 @@ const getUserOrders = async (req, res) => {
 
 const getFarmerOrders = async (req, res) => {
   try {
-    const farmerProducts = await Product.find({ farmerId: req.user._id }).select("_id");
-    const farmerProductIds = farmerProducts.map((product) => product._id);
+    const farmerOrders = await getOrdersForFarmer(req.user._id);
+    const populatedOrders = await Promise.all(farmerOrders.map((order) => populateOrder(order)));
 
-    const orders = await Order.find({
-      "products.productId": { $in: farmerProductIds },
-    })
-      .populate("userId", "name email phone location")
-      .populate({
-        path: "products.productId",
-        select: "name imageUrl category farmerId price",
-      })
-      .sort({ createdAt: -1 });
-
-    const filteredOrders = orders
+    const filteredOrders = populatedOrders
       .map((order) => {
         const matchingProducts = order.products.filter(
           (item) =>
             item.productId &&
-            String(item.productId.farmerId) === String(req.user._id)
+            String(item.productId.farmerId?._id || item.productId.farmerId) === String(req.user._id)
         );
 
         return {
-          ...order.toObject(),
+          ...order,
           products: matchingProducts,
         };
       })
@@ -190,18 +165,8 @@ const getFarmerOrders = async (req, res) => {
 
 const getFarmerAnalytics = async (req, res) => {
   try {
-    const farmerProducts = await Product.find({ farmerId: req.user._id }).select("_id price");
-    const farmerProductIds = farmerProducts.map((product) => String(product._id));
-
-    const orders = await Order.find({
-      "products.productId": { $in: farmerProductIds },
-      paymentStatus: "paid",
-    })
-      .populate({
-        path: "products.productId",
-        select: "farmerId",
-      })
-      .sort({ createdAt: -1 });
+    const farmerOrders = await getOrdersForFarmer(req.user._id, { paymentStatus: "paid" });
+    const populatedOrders = await Promise.all(farmerOrders.map((order) => populateOrder(order)));
 
     let totalEarnings = 0;
     let completedEarnings = 0;
@@ -210,13 +175,13 @@ const getFarmerAnalytics = async (req, res) => {
     let completedOrders = 0;
     let cancelledOrders = 0;
 
-    const recentEarnings = orders
+    const recentEarnings = populatedOrders
       .slice(0, 5)
       .map((order) => {
         const orderRevenue = order.products.reduce((sum, item) => {
           if (
             item.productId &&
-            String(item.productId.farmerId) === String(req.user._id)
+            String(item.productId.farmerId?._id || item.productId.farmerId) === String(req.user._id)
           ) {
             return sum + item.price * item.quantity;
           }
@@ -233,14 +198,14 @@ const getFarmerAnalytics = async (req, res) => {
       })
       .filter((item) => item.amount > 0);
 
-    orders.forEach((order) => {
+    populatedOrders.forEach((order) => {
       let orderHasFarmerProducts = false;
       let orderRevenue = 0;
 
       order.products.forEach((item) => {
         if (
           item.productId &&
-          String(item.productId.farmerId) === String(req.user._id)
+          String(item.productId.farmerId?._id || item.productId.farmerId) === String(req.user._id)
         ) {
           orderHasFarmerProducts = true;
           const lineRevenue = item.price * item.quantity;
@@ -296,42 +261,38 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    const order = await Order.findById(orderId).populate({
-      path: "products.productId",
-      select: "name imageUrl category farmerId",
-    });
+    const order = await orders.findById(orderId);
 
     if (!order) {
       return res.status(404).json({ message: "Order not found." });
     }
 
-    const farmerOwnsProduct = order.products.some(
-      (item) =>
-        item.productId && String(item.productId.farmerId) === String(req.user._id)
+    const productDocs = await Promise.all(
+      order.products.map((item) => products.findById(item.productId))
     );
 
-    if (!farmerOwnsProduct) {
+    const ownsAny = productDocs.some(
+      (product) => product && String(product.farmerId) === String(req.user._id)
+    );
+
+    if (!ownsAny) {
       return res.status(403).json({
         message: "Forbidden. You can only update orders for your own products.",
       });
     }
 
-    order.status = status;
-    await order.save({ validateModifiedOnly: true });
+    const updatedOrder = await orders.updateById(order._id, (doc) => ({
+      ...doc,
+      status,
+    }));
 
-    const populatedOrder = await Order.findById(order._id)
-      .populate("userId", "name email phone role")
-      .populate({
-        path: "products.productId",
-        select: "name imageUrl category farmerId",
-      });
-
+    const populatedOrder = await populateOrder(updatedOrder);
     const farmerIds = [
       ...new Set(
         populatedOrder.products
           .map((item) => item.productId?.farmerId)
           .filter(Boolean)
-          .map((farmerId) => String(farmerId))
+          .map((farmerId) => String(farmerId._id || farmerId))
       ),
     ];
 

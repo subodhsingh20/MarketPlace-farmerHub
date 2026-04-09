@@ -1,6 +1,5 @@
 const express = require("express");
 const http = require("http");
-const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 const dotenv = require("dotenv");
@@ -21,6 +20,7 @@ const {
   getAllowedOrigins,
   isAllowedOrigin,
 } = require("./utils/corsOrigins");
+const { initializeCloudant } = require("./data");
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 dotenv.config({ path: path.resolve(__dirname, ".env"), override: true });
@@ -29,8 +29,6 @@ const app = express();
 const server = http.createServer(app);
 setIo(initializeSocket(server));
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/farmer-marketplace";
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
@@ -104,18 +102,22 @@ const startServer = async () => {
       );
     }
 
-    if (!process.env.MONGODB_URI) {
-      console.warn("MONGODB_URI is not set. Falling back to the local MongoDB connection string.");
+    if (!process.env.CLOUDANT_URL) {
+      console.warn("CLOUDANT_URL is not set. Set the Cloudant service URL before starting.");
     }
 
-    await mongoose.connect(MONGODB_URI);
-    console.log("MongoDB connected");
+    if (!process.env.CLOUDANT_API_KEY) {
+      console.warn("CLOUDANT_API_KEY is not set. Set the Cloudant API key before starting.");
+    }
+
+    await initializeCloudant();
+    console.log("Cloudant connected");
 
     server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
+    console.error("Cloudant initialization failed:", error.message);
     process.exit(1);
   }
 };

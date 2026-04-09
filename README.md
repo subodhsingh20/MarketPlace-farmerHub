@@ -5,7 +5,7 @@ Farmer Marketplace is a full-stack app for connecting customers with nearby farm
 ## Stack
 
 - Frontend: React, React Router, Axios, Socket.IO client
-- Backend: Node.js, Express, MongoDB, Mongoose, Socket.IO
+- Backend: Node.js, Express, IBM Cloudant, Socket.IO
 - Payments: Razorpay in live mode, mock/test payment mode for development
 
 ## Repository Structure
@@ -22,7 +22,9 @@ Farmer Marketplace is a full-stack app for connecting customers with nearby farm
 Copy [backend/.env.example](backend/.env.example) and set:
 
 - `PORT`
-- `MONGODB_URI`
+- `CLOUDANT_URL`
+- `CLOUDANT_API_KEY`
+- `CLOUDANT_DB_PREFIX`
 - `JWT_SECRET`
 - `CLIENT_URL`
 - `PAYMENT_MODE`
@@ -111,7 +113,9 @@ docker compose -f docker-compose.prod.yml up -d
 
 Set these on the server that runs Docker Compose:
 
-- `MONGODB_URI`
+ - `CLOUDANT_URL`
+ - `CLOUDANT_API_KEY`
+ - `CLOUDANT_DB_PREFIX`
 - `JWT_SECRET`
 - `CLIENT_URL`
 - `PAYMENT_MODE`

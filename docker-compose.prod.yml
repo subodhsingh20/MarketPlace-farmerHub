@@ -4,7 +4,9 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - MONGODB_URI=${MONGODB_URI}
+      - CLOUDANT_URL=${CLOUDANT_URL}
+      - CLOUDANT_API_KEY=${CLOUDANT_API_KEY}
+      - CLOUDANT_DB_PREFIX=${CLOUDANT_DB_PREFIX:-farmer_marketplace}
       - CLIENT_URL=${CLIENT_URL}
       - JWT_SECRET=${JWT_SECRET}
       - PAYMENT_MODE=${PAYMENT_MODE:-live}

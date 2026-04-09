@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const { users } = require("../data");
 const { geocodeAddress } = require("../utils/geocodeAddress");
 
 const createToken = (user) =>
@@ -13,6 +13,16 @@ const createToken = (user) =>
     process.env.JWT_SECRET || "development_jwt_secret",
     { expiresIn: "7d" }
   );
+
+const buildAuthUserPayload = (user) => ({
+  id: user._id,
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  phone: user.phone,
+  role: user.role,
+  location: user.location,
+});
 
 const registerUser = async (req, res) => {
   try {
@@ -44,7 +54,9 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+    const existingUser = await users.findOne({
+      $or: [{ email: String(email).toLowerCase() }, { phone: String(phone).trim() }],
+    });
 
     if (existingUser) {
       return res.status(409).json({ message: "User with this email or phone already exists." });
@@ -52,26 +64,25 @@ const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
-      name,
-      email,
-      phone,
+    const user = await users.create({
+      name: String(name).trim(),
+      email: String(email).toLowerCase().trim(),
+      phone: String(phone).trim(),
       password: hashedPassword,
       role,
-      location: resolvedLocation,
+      location: {
+        latitude: Number(resolvedLocation.latitude),
+        longitude: Number(resolvedLocation.longitude),
+      },
+      ratings: [],
+      averageRating: 0,
+      addresses: [],
     });
 
     return res.status(201).json({
       message: "User registered successfully.",
       token: createToken(user),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        location: user.location,
-      },
+      user: buildAuthUserPayload(user),
     });
   } catch (error) {
     return res.status(500).json({
@@ -112,13 +123,13 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required." });
     }
 
-    const user = await User.findOne({ email });
+    const user = await users.findOne({ email: String(email).toLowerCase().trim() });
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    const isPasswordValid = await user.comparePassword(password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password." });
@@ -127,14 +138,7 @@ const loginUser = async (req, res) => {
     return res.status(200).json({
       message: "Login successful.",
       token: createToken(user),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        location: user.location,
-      },
+      user: buildAuthUserPayload(user),
     });
   } catch (error) {
     return res.status(500).json({

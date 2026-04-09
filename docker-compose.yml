@@ -8,7 +8,9 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - MONGODB_URI=${MONGODB_URI}
+      - CLOUDANT_URL=${CLOUDANT_URL}
+      - CLOUDANT_API_KEY=${CLOUDANT_API_KEY}
+      - CLOUDANT_DB_PREFIX=${CLOUDANT_DB_PREFIX:-farmer_marketplace}
       - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET}
       - NODE_ENV=production
@@ -31,21 +33,6 @@ services:
       - backend
     networks:
       - app-network
-
-  mongodb:
-    image: mongo:5.0
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - app-network
-
-volumes:
-  mongodb_data:
 
 networks:
   app-network:
