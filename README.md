@@ -49,6 +49,16 @@ Copy [frontend/.env.example](frontend/.env.example) and set:
 - `REACT_APP_RAZORPAY_KEY_ID`
 - `REACT_APP_PAYMENT_GATEWAY_URL`
 
+For AWS Amplify, use your Render backend URL as the API base:
+
+```env
+REACT_APP_API_URL=https://YOUR-RENDER-BACKEND.onrender.com/api
+REACT_APP_SOCKET_URL=https://YOUR-RENDER-BACKEND.onrender.com
+REACT_APP_PAYMENT_MODE=test
+REACT_APP_RAZORPAY_KEY_ID=
+REACT_APP_PAYMENT_GATEWAY_URL=https://checkout.razorpay.com/v1/checkout.js
+```
+
 ## Local Development
 
 ### Backend
@@ -124,10 +134,23 @@ Set these on the server that runs Docker Compose:
 
 Set `CLIENT_URL` to the exact browser origin of your frontend, for example `https://yourdomain.com`. If you have multiple frontend origins, provide a comma-separated list.
 
+For Render, the same values apply. A typical backend config looks like this:
+
+```env
+CLOUDANT_URL=https://YOUR-CLOUDANT-ACCOUNT.cloudantnosqldb.appdomain.cloud
+CLOUDANT_API_KEY=YOUR_CLOUDANT_API_KEY
+CLOUDANT_DB_PREFIX=farmer_marketplace
+JWT_SECRET=YOUR_STRONG_RANDOM_SECRET
+CLIENT_URL=https://YOUR-AMPLIFY-DOMAIN.amplifyapp.com
+PAYMENT_MODE=test
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+```
+
 ### Example Backend CORS Value
 
 ```env
-CLIENT_URL=http://localhost:3000,http://your-server-ip
+CLIENT_URL=http://localhost:3000,https://YOUR-AMPLIFY-DOMAIN.amplifyapp.com
 ```
 
 

@@ -1,11 +1,14 @@
 import axios from "axios";
 
 const defaultApiBaseUrl =
-  typeof window !== "undefined"
-    ? ["localhost", "127.0.0.1"].includes(window.location.hostname)
-      ? `${window.location.protocol}//${window.location.hostname}:5000/api`
-      : `${window.location.origin}/api`
-    : "http://localhost:5000/api";
+  typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? `${window.location.protocol}//${window.location.hostname}:5000/api`
+    : "";
+
+if (!process.env.REACT_APP_API_URL && !defaultApiBaseUrl) {
+  // Keep production from silently calling the wrong origin when the env var is missing.
+  console.warn("REACT_APP_API_URL is not set. API calls will fail until it is configured.");
+}
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || defaultApiBaseUrl,
