@@ -137,7 +137,11 @@ const getUserOrders = async (req, res) => {
 const getFarmerOrders = async (req, res) => {
   try {
     const farmerOrders = await getOrdersForFarmer(req.user._id);
-    const populatedOrders = await Promise.all(farmerOrders.map((order) => populateOrder(order)));
+    const populatedOrders = (
+      await Promise.allSettled(farmerOrders.map((order) => populateOrder(order)))
+    )
+      .filter((result) => result.status === "fulfilled" && result.value)
+      .map((result) => result.value);
 
     const filteredOrders = populatedOrders
       .map((order) => {
@@ -165,8 +169,9 @@ const getFarmerOrders = async (req, res) => {
 
 const getFarmerAnalytics = async (req, res) => {
   try {
-    const farmerOrders = await getOrdersForFarmer(req.user._id, { paymentStatus: "paid" });
-    const populatedOrders = await Promise.all(farmerOrders.map((order) => populateOrder(order)));
+    const farmerProducts = await products.find({ farmerId: String(req.user._id) });
+    const farmerProductIds = new Set(farmerProducts.map((product) => String(product._id)));
+    const farmerOrders = await orders.find({}, { sort: [{ createdAt: -1 }] });
 
     let totalEarnings = 0;
     let completedEarnings = 0;
@@ -174,43 +179,27 @@ const getFarmerAnalytics = async (req, res) => {
     let pendingOrders = 0;
     let completedOrders = 0;
     let cancelledOrders = 0;
+    const recentEarnings = [];
 
-    const recentEarnings = populatedOrders
-      .slice(0, 5)
-      .map((order) => {
-        const orderRevenue = order.products.reduce((sum, item) => {
-          if (
-            item.productId &&
-            String(item.productId.farmerId?._id || item.productId.farmerId) === String(req.user._id)
-          ) {
-            return sum + item.price * item.quantity;
-          }
+    farmerOrders.forEach((order) => {
+      if (order.paymentStatus !== "paid") {
+        return;
+      }
 
-          return sum;
-        }, 0);
-
-        return {
-          orderId: order._id,
-          amount: orderRevenue,
-          status: order.status,
-          createdAt: order.createdAt,
-        };
-      })
-      .filter((item) => item.amount > 0);
-
-    populatedOrders.forEach((order) => {
       let orderHasFarmerProducts = false;
       let orderRevenue = 0;
+      const orderProducts = Array.isArray(order.products) ? order.products : [];
 
-      order.products.forEach((item) => {
-        if (
-          item.productId &&
-          String(item.productId.farmerId?._id || item.productId.farmerId) === String(req.user._id)
-        ) {
+      orderProducts.forEach((item) => {
+        const productId = String(item.productId?._id || item.productId || "");
+
+        if (productId && farmerProductIds.has(productId)) {
           orderHasFarmerProducts = true;
-          const lineRevenue = item.price * item.quantity;
+          const quantity = Number(item.quantity) || 0;
+          const price = Number(item.price) || 0;
+          const lineRevenue = price * quantity;
           orderRevenue += lineRevenue;
-          totalItemsSold += item.quantity;
+          totalItemsSold += quantity;
         }
       });
 
@@ -227,6 +216,15 @@ const getFarmerAnalytics = async (req, res) => {
         cancelledOrders += 1;
       } else {
         pendingOrders += 1;
+      }
+
+      if (orderRevenue > 0 && recentEarnings.length < 5) {
+        recentEarnings.push({
+          orderId: order._id,
+          amount: orderRevenue,
+          status: order.status,
+          createdAt: order.createdAt,
+        });
       }
     });
 
