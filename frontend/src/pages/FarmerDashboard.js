@@ -430,7 +430,7 @@ function FarmerDashboard() {
 
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Price (Rs. per unit)
+                          Price (Rs. per Kg or Litre)
                         </label>
                         <input
                           type="number"

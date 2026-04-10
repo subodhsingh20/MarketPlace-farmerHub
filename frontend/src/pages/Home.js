@@ -116,7 +116,7 @@ function Home() {
                   className="block w-full max-w-xl lg:max-w-[34rem] xl:max-w-[38rem]"
                 >
                   <img
-                    src="https://plus.unsplash.com/premium_photo-1682092034268-645322c1d308?auto=format&fit=crop&q=60&crop=entropy&cs=srgb&fm=jpg&ixid=M3wxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNzczOTMxOTk3fA&ixlib=rb-4.1.0"
+                    src="https://images.unsplash.com/photo-1609252509027-3928a66302fd?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                     alt="Fresh market produce shopping"
                     loading="eager"
                     fetchPriority="high"
@@ -165,11 +165,11 @@ function Home() {
                 <FadeIn delay={0.4}>
                   <div className="flex flex-col sm:flex-row gap-4">
                     <Link
-                      to="/products"
+                      to="/login"
                       className="group bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl w-full sm:w-auto"
                     >
                       <span className="flex items-center justify-center">
-                        Shop Fresh Produce
+                        Shop Products 
                         <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
