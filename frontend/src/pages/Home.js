@@ -24,7 +24,8 @@ function Home() {
         setIsLoading(true);
         const response = await getAllProducts();
         // Get first 4 products as featured
-        setFeaturedProducts(response.data.products.slice(0, 4));
+        const products = Array.isArray(response.data?.products) ? response.data.products : [];
+        setFeaturedProducts(products.slice(0, 4));
       } catch (error) {
         console.error("Failed to load featured products:", error);
       } finally {
