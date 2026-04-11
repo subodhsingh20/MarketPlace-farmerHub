@@ -151,6 +151,8 @@ The workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
 If you use [.github/workflows/cicd.yml](.github/workflows/cicd.yml), add this repository secret:
 
 - `IBM_EVENT_NOTIFICATIONS_API_KEY`
+- `IBM_EVENT_NOTIFICATIONS_INSTANCE_ID`
+- `IBM_REGION`
 
 Current image names:
 

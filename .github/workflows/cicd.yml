@@ -12,7 +12,7 @@ jobs:
     env:
       IBM_REGION: au-syd
       IBM_EVENT_NOTIFICATIONS_INSTANCE_ID: 4fbda1b5-313f-4452-b3a3-3230a02e631d
-      IBM_EVENT_NOTIFICATIONS_API_KEY: ${{ secrets.prcuNduufLgOKB1IIVGoG7AJvh2WV4dyZjoJ9EP8wlLf }}
+      IBM_EVENT_NOTIFICATIONS_API_KEY: ${{ secrets.IBM_EVENT_NOTIFICATIONS_API_KEY }}
 
     steps:
       - name: Checkout code
@@ -31,8 +31,13 @@ jobs:
           response=$(curl -s -X POST "https://iam.cloud.ibm.com/identity/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -H "Accept: application/json" \
-            -d "grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${IBM_EVENT_NOTIFICATIONS_API_KEY}")
+            --data-urlencode "grant_type=urn:ibm:params:oauth:grant-type:apikey" \
+            --data-urlencode "apikey=${IBM_EVENT_NOTIFICATIONS_API_KEY}")
           access_token=$(echo "$response" | python -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+          if [ -z "$access_token" ]; then
+            echo "$response"
+            exit 1
+          fi
           echo "IBM_EVENT_NOTIFICATIONS_BEARER_TOKEN=$access_token" >> "$GITHUB_ENV"
 
       - name: Install frontend dependencies
@@ -65,7 +70,7 @@ jobs:
           EOF
           )
 
-          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/instances/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
+          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/apps/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
             -H "Authorization: Bearer ${IBM_EVENT_NOTIFICATIONS_BEARER_TOKEN}" \
             -H "Content-Type: application/json" \
             --data-raw "$payload"
@@ -92,7 +97,7 @@ jobs:
           EOF
           )
 
-          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/instances/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
+          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/apps/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
             -H "Authorization: Bearer ${IBM_EVENT_NOTIFICATIONS_BEARER_TOKEN}" \
             -H "Content-Type: application/json" \
             --data-raw "$payload"
