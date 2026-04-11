@@ -66,7 +66,7 @@ jobs:
           EOF
           )
 
-          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/apps/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
+          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/instances/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
             -H "Authorization: Bearer ${IBM_EVENT_NOTIFICATIONS_BEARER_TOKEN}" \
             -H "Content-Type: application/json" \
             --data-raw "$payload"
@@ -93,7 +93,7 @@ jobs:
           EOF
           )
 
-          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/apps/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
+          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/instances/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
             -H "Authorization: Bearer ${IBM_EVENT_NOTIFICATIONS_BEARER_TOKEN}" \
             -H "Content-Type: application/json" \
             --data-raw "$payload"
