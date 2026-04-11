@@ -148,6 +148,10 @@ The workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
 - pushes images to Docker Hub on pushes to `main`
 - validates image builds on pull requests
 
+If you use [.github/workflows/cicd.yml](.github/workflows/cicd.yml), add this repository secret:
+
+- `IBM_EVENT_NOTIFICATIONS_API_KEY`
+
 Current image names:
 
 - `subodhsingh20/farmer-marketplace-backend:latest`

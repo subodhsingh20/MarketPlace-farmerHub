@@ -12,7 +12,7 @@ jobs:
     env:
       IBM_REGION: au-syd
       IBM_EVENT_NOTIFICATIONS_INSTANCE_ID: 4fbda1b5-313f-4452-b3a3-3230a02e631d
-      IBM_EVENT_NOTIFICATIONS_API_KEY: prcuNduufLgOKB1IIVGoG7AJvh2WV4dyZjoJ9EP8wlLf
+      IBM_EVENT_NOTIFICATIONS_API_KEY: ${{ secrets.prcuNduufLgOKB1IIVGoG7AJvh2WV4dyZjoJ9EP8wlLf }}
 
     steps:
       - name: Checkout code
@@ -26,7 +26,6 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Get IBM access token
-        id: ibm_token
         shell: bash
         run: |
           response=$(curl -s -X POST "https://iam.cloud.ibm.com/identity/token" \
@@ -46,6 +45,7 @@ jobs:
 
       - name: Notify Success
         if: success()
+        shell: bash
         run: |
           payload=$(cat <<EOF
           {
@@ -54,7 +54,6 @@ jobs:
             "source": "github-actions",
             "type": "cicd.success",
             "datacontenttype": "application/json",
-            "ibmensourceid": "4fbda1b5-313f-4452-b3a3-3230a02e631d:api",
             "subject": "CI/CD Pipeline Success",
             "data": {
               "repository": "${GITHUB_REPOSITORY}",
@@ -73,6 +72,7 @@ jobs:
 
       - name: Notify Failure
         if: failure()
+        shell: bash
         run: |
           payload=$(cat <<EOF
           {
@@ -81,7 +81,6 @@ jobs:
             "source": "github-actions",
             "type": "cicd.failure",
             "datacontenttype": "application/json",
-            "ibmensourceid": "4fbda1b5-313f-4452-b3a3-3230a02e631d:api",
             "subject": "CI/CD Pipeline Failure",
             "data": {
               "repository": "${GITHUB_REPOSITORY}",
