@@ -131,7 +131,6 @@ REACT_APP_PAYMENT_GATEWAY_URL=https://checkout.razorpay.com/v1/checkout.js
 ### Docker Deployment
 
 The repository also includes Docker Compose support for server-based deployments.
-
 Use [docker-compose.prod.yml](docker-compose.prod.yml) after logging in to Docker Hub:
 
 ```bash
@@ -160,4 +159,3 @@ Current image names:
 - Use `CLOUDANT_DB_PREFIX=farmer_marketplace` unless you intentionally want a different database namespace
 - If you enable live Razorpay, set `PAYMENT_MODE=live` and provide both Razorpay keys on the backend and the frontend key ID
 - The frontend now safely handles empty or malformed featured product responses
-
