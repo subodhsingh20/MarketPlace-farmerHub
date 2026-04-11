@@ -50,20 +50,23 @@ jobs:
           payload=$(cat <<EOF
           {
             "specversion": "1.0",
-            "type": "cicd.success",
+            "id": "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}",
             "source": "github-actions",
+            "type": "cicd.success",
+            "datacontenttype": "application/json",
+            "ibmensourceid": "4fbda1b5-313f-4452-b3a3-3230a02e631d:api",
             "subject": "CI/CD Pipeline Success",
             "data": {
-              "message": "Workflow succeeded for ${GITHUB_REPOSITORY} on branch ${GITHUB_REF_NAME} at commit ${GITHUB_SHA}"
-            },
-            "ibmen": {
-              "topic": "event-notifications-for-EADC-project"
+              "repository": "${GITHUB_REPOSITORY}",
+              "branch": "${GITHUB_REF_NAME}",
+              "commit": "${GITHUB_SHA}",
+              "message": "Workflow succeeded"
             }
           }
           EOF
           )
 
-          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/instances/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
+          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/apps/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
             -H "Authorization: Bearer ${IBM_EVENT_NOTIFICATIONS_BEARER_TOKEN}" \
             -H "Content-Type: application/json" \
             --data-raw "$payload"
@@ -74,20 +77,23 @@ jobs:
           payload=$(cat <<EOF
           {
             "specversion": "1.0",
-            "type": "cicd.failure",
+            "id": "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}",
             "source": "github-actions",
+            "type": "cicd.failure",
+            "datacontenttype": "application/json",
+            "ibmensourceid": "4fbda1b5-313f-4452-b3a3-3230a02e631d:api",
             "subject": "CI/CD Pipeline Failure",
             "data": {
-              "message": "Workflow failed for ${GITHUB_REPOSITORY} on branch ${GITHUB_REF_NAME} at commit ${GITHUB_SHA}"
-            },
-            "ibmen": {
-              "topic": "event-notifications-for-EADC-project"
+              "repository": "${GITHUB_REPOSITORY}",
+              "branch": "${GITHUB_REF_NAME}",
+              "commit": "${GITHUB_SHA}",
+              "message": "Workflow failed"
             }
           }
           EOF
           )
 
-          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/instances/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
+          curl --fail-with-body -X POST "https://${IBM_REGION}.event-notifications.cloud.ibm.com/event-notifications/v1/apps/${IBM_EVENT_NOTIFICATIONS_INSTANCE_ID}/notifications" \
             -H "Authorization: Bearer ${IBM_EVENT_NOTIFICATIONS_BEARER_TOKEN}" \
             -H "Content-Type: application/json" \
             --data-raw "$payload"
