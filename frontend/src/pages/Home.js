@@ -7,6 +7,81 @@ import FadeIn from "../components/FadeIn";
 import { getAllProducts } from "../services/authService";
 import LoadingSpinner from "../components/LoadingSpinner";
 
+const fallbackFeaturedProducts = [
+  {
+    _id: "fallback-tomatoes",
+    name: "Farm Fresh Tomatoes",
+    category: "Vegetables",
+    price: 36,
+    averageRating: 4.8,
+    quantity: 24,
+    imageUrl: "https://images.unsplash.com/photo-1546470427-e0e04b43b76e?auto=format&fit=crop&w=1200&q=80",
+    farmerId: {
+      _id: "fallback-farmer-1",
+      name: "Green Valley Farms",
+      phone: "+91 90000 10001",
+    },
+    location: {
+      latitude: 12.97,
+      longitude: 77.59,
+    },
+  },
+  {
+    _id: "fallback-spinach",
+    name: "Organic Spinach Bunch",
+    category: "Leafy Greens",
+    price: 22,
+    averageRating: 4.7,
+    quantity: 18,
+    imageUrl: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=1200&q=80",
+    farmerId: {
+      _id: "fallback-farmer-2",
+      name: "Sunrise Organics",
+      phone: "+91 90000 10002",
+    },
+    location: {
+      latitude: 13.02,
+      longitude: 77.61,
+    },
+  },
+  {
+    _id: "fallback-pulses",
+    name: "Premium Moong Dal",
+    category: "Pulses",
+    price: 84,
+    averageRating: 4.9,
+    quantity: 30,
+    imageUrl: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80",
+    farmerId: {
+      _id: "fallback-farmer-3",
+      name: "Harvest Co-op",
+      phone: "+91 90000 10003",
+    },
+    location: {
+      latitude: 12.91,
+      longitude: 77.64,
+    },
+  },
+  {
+    _id: "fallback-honey",
+    name: "Raw Farm Honey",
+    category: "Pantry",
+    price: 149,
+    averageRating: 4.6,
+    quantity: 12,
+    imageUrl: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=80",
+    farmerId: {
+      _id: "fallback-farmer-4",
+      name: "Country Harvest",
+      phone: "+91 90000 10004",
+    },
+    location: {
+      latitude: 13.04,
+      longitude: 77.58,
+    },
+  },
+];
+
 function Home() {
   const { user } = useAuth();
   const { addToCart, cartItems } = useCart();
@@ -23,11 +98,10 @@ function Home() {
       try {
         setIsLoading(true);
         const response = await getAllProducts();
-        // Get first 4 products as featured
         const products = Array.isArray(response.data?.products) ? response.data.products : [];
         setFeaturedProducts(products.slice(0, 4));
       } catch (error) {
-        console.error("Failed to load featured products:", error);
+        setFeaturedProducts(fallbackFeaturedProducts);
       } finally {
         setIsLoading(false);
       }
@@ -41,7 +115,6 @@ function Home() {
       <section className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 to-green-50 px-4 py-8 sm:px-6">
         <div className="responsive-shell w-full">
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)] lg:gap-10 xl:gap-14">
-            {/* Left: Content */}
             <div className="space-y-6 lg:max-w-[40rem]">
               <div>
                 <span className="responsive-chip mb-5 inline-block bg-emerald-100 text-emerald-800">Farmer workspace</span>
@@ -61,7 +134,6 @@ function Home() {
                 </Link>
               </div>
             </div>
-            {/* Right: Image */}
             <div className="flex justify-center lg:justify-end">
               <a
                 href="https://unsplash.com/photos/farmer-handful-of-harvested-wheat-kernels-from-the-heap-loaded-into-tractor-trailer-mMmIC32vdxQ"
@@ -87,7 +159,6 @@ function Home() {
       <section className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-50 to-black-50 px-4 py-8 sm:px-6">
         <div className="responsive-shell w-full">
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)] lg:gap-10 xl:gap-14">
-            {/* Left: Content */}
             <div className="space-y-6 lg:max-w-[40rem]">
               <div>
                 <span className="responsive-chip mb-5 inline-block bg-green-100 text-green-800">Customer marketplace</span>
@@ -107,24 +178,23 @@ function Home() {
                 </Link>
               </div>
             </div>
-            {/* Right: Image */}
-              <div className="flex justify-center lg:justify-end">
-                <a
-                  href="https://unsplash.com/photos/young-indian-farmer-standing-in-cotton-agriculture-field-NajxUaCK7XQ"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full max-w-xl lg:max-w-[34rem] xl:max-w-[38rem]"
-                >
-                  <img
-                    src="https://images.unsplash.com/photo-1609252509027-3928a66302fd?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                    alt="Fresh market produce shopping"
-                    loading="eager"
-                    fetchPriority="high"
-                    decoding="async"
-                    className="h-72 w-full rounded-[1.75rem] object-cover object-center shadow-2xl sm:h-80 lg:h-[22rem] xl:h-[25rem]"
-                  />
-                </a>
-              </div>
+            <div className="flex justify-center lg:justify-end">
+              <a
+                href="https://unsplash.com/photos/young-indian-farmer-standing-in-cotton-agriculture-field-NajxUaCK7XQ"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full max-w-xl lg:max-w-[34rem] xl:max-w-[38rem]"
+              >
+                <img
+                  src="https://images.unsplash.com/photo-1609252509027-3928a66302fd?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                  alt="Fresh market produce shopping"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="h-72 w-full rounded-[1.75rem] object-cover object-center shadow-2xl sm:h-80 lg:h-[22rem] xl:h-[25rem]"
+                />
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -133,22 +203,20 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
       <FadeIn>
-        <section className="bg-gradient-to-br from-emerald-50/50 to-teal-50/50 min-h-screen flex items-center justify-center w-full">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
-              {/* Left Content */}
-              <div className="text-left space-y-6">
+        <section className="flex min-h-screen w-full items-start justify-start bg-gradient-to-br from-emerald-50/50 to-teal-50/50 px-4 pb-10 pt-8 sm:px-6 md:items-center md:justify-center md:py-8">
+          <div className="mx-auto w-full max-w-7xl">
+            <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12 lg:gap-16">
+              <div className="space-y-6 text-center md:text-left">
                 <FadeIn delay={0.1}>
-                  <div className="inline-flex items-center px-4 py-2 rounded-full bg-emerald-100/80 text-emerald-800 text-sm font-medium">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2 animate-pulse"></span>
+                  <div className="inline-flex items-center rounded-full bg-emerald-100/80 px-4 py-2 text-sm font-medium text-emerald-800">
+                    <span className="mr-2 h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
                     Connecting Farmers & Consumers
                   </div>
                 </FadeIn>
 
                 <FadeIn delay={0.2}>
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 leading-tight">
+                  <h1 className="text-4xl font-black leading-tight tracking-tight text-gray-900 md:text-5xl lg:text-6xl">
                     Buy Direct from
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-700">
                       Farmers
@@ -157,27 +225,27 @@ function Home() {
                 </FadeIn>
 
                 <FadeIn delay={0.3}>
-                  <p className="text-lg md:text-xl text-gray-700 leading-relaxed max-w-lg">
+                  <p className="mx-auto max-w-lg text-lg leading-relaxed text-gray-700 md:mx-0 md:text-xl">
                     No middlemen means lower prices, fresher products delivered straight from the farm.
                   </p>
                 </FadeIn>
 
                 <FadeIn delay={0.4}>
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="mx-auto flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center md:mx-0 md:justify-start">
                     <Link
                       to="/login"
-                      className="group bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl w-full sm:w-auto"
+                      className="group inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-3.5 text-base font-bold text-white shadow-lg transition-all duration-300 hover:from-emerald-700 hover:to-green-700 hover:shadow-xl sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
                     >
                       <span className="flex items-center justify-center">
-                        Shop Products 
-                        <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        Shop Products
+                        <svg className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                       </span>
                     </Link>
                     <Link
                       to="/register"
-                      className="group border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:shadow-lg w-full sm:w-auto"
+                      className="group inline-flex w-full items-center justify-center rounded-2xl border-2 border-emerald-600 px-6 py-3.5 text-base font-bold text-emerald-600 transition-all duration-300 hover:bg-emerald-50 hover:shadow-lg sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
                     >
                       Start Selling
                     </Link>
@@ -185,13 +253,12 @@ function Home() {
                 </FadeIn>
               </div>
 
-              {/* Right Content - Hero Image */}
               <FadeIn delay={0.5} direction="left">
                 <div className="flex justify-center">
                   <img 
                     src="https://images.unsplash.com/photo-1607305387299-a3d9611cd469?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80" 
                     alt="Fresh organic vegetables from local farm" 
-                    className="w-full max-w-lg h-80 lg:h-[450px] object-cover rounded-2xl shadow-2xl"
+                    className="h-64 w-full max-w-lg rounded-2xl object-cover shadow-2xl sm:h-72 lg:h-[450px]"
                   />
                 </div>
               </FadeIn>
@@ -200,7 +267,6 @@ function Home() {
         </section>
       </FadeIn>
 
-      {/* Categories Section */}
       <FadeIn>
         <section className="my-16 bg-gradient-to-b from-[#f9fcf8] via-white to-[#eef7f0] py-8 lg:py-14">
           <div className="max-w-7xl mx-auto px-6">
@@ -222,7 +288,7 @@ function Home() {
               <FadeIn delay={0.2} className="w-full">
                 <Link
                   to="/products?category=vegetables"
-                  className="group relative block min-h-[22rem] overflow-hidden rounded-[2rem] border border-emerald-200 bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-700 p-7 text-left text-white shadow-[0_24px_60px_rgba(21,128,61,0.18)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_70px_rgba(21,128,61,0.26)] sm:p-8 lg:min-h-[24rem] lg:p-10"
+                  className="group relative block min-h-[18rem] overflow-hidden rounded-[2rem] border border-emerald-200 bg-gradient-to-br from-emerald-500 via-green-500 to-emerald-700 p-5 text-left text-white shadow-[0_24px_60px_rgba(21,128,61,0.18)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_70px_rgba(21,128,61,0.26)] sm:min-h-[22rem] sm:p-8 lg:min-h-[24rem] lg:p-10"
                 >
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.24),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.12))]" />
                   <div className="absolute -right-12 bottom-0 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
@@ -240,7 +306,7 @@ function Home() {
                       </span>
                     </div>
 
-                    <div className="mt-8">
+                    <div className="mt-6 sm:mt-8">
                       <h3 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.8rem]">
                         Vegetables
                       </h3>
@@ -249,7 +315,7 @@ function Home() {
                       </p>
                     </div>
 
-                    <div className="mt-8 grid max-w-md grid-cols-2 gap-3">
+                    <div className="mt-6 grid max-w-md grid-cols-2 gap-3 sm:mt-8">
                       <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
                         <p className="text-xs uppercase tracking-[0.14em] text-emerald-100">Popular</p>
                         <p className="mt-1 text-sm font-semibold text-white">Tomato, Onion, Spinach</p>
@@ -260,7 +326,7 @@ function Home() {
                       </div>
                     </div>
 
-                    <div className="mt-auto pt-8">
+                    <div className="mt-auto pt-6 sm:pt-8">
                       <div className="inline-flex items-center text-base font-semibold text-white transition-transform duration-300 group-hover:translate-x-2">
                         Explore Vegetables
                         <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,7 +341,7 @@ function Home() {
               <FadeIn delay={0.3} className="w-full">
                 <Link
                   to="/products?category=pulses"
-                  className="group relative block min-h-[22rem] overflow-hidden rounded-[2rem] border border-amber-200 bg-gradient-to-br from-amber-500 via-orange-500 to-amber-700 p-7 text-left text-white shadow-[0_24px_60px_rgba(217,119,6,0.18)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_70px_rgba(217,119,6,0.24)] sm:p-8 lg:min-h-[24rem] lg:p-10"
+                  className="group relative block min-h-[18rem] overflow-hidden rounded-[2rem] border border-amber-200 bg-gradient-to-br from-amber-500 via-orange-500 to-amber-700 p-5 text-left text-white shadow-[0_24px_60px_rgba(217,119,6,0.18)] transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_28px_70px_rgba(217,119,6,0.24)] sm:min-h-[22rem] sm:p-8 lg:min-h-[24rem] lg:p-10"
                 >
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.12))]" />
                   <div className="absolute -left-10 bottom-2 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
@@ -293,7 +359,7 @@ function Home() {
                       </span>
                     </div>
 
-                    <div className="mt-8">
+                    <div className="mt-6 sm:mt-8">
                       <h3 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-[2.8rem]">
                         Pulses
                       </h3>
@@ -302,7 +368,7 @@ function Home() {
                       </p>
                     </div>
 
-                    <div className="mt-8 grid max-w-md grid-cols-2 gap-3">
+                    <div className="mt-6 grid max-w-md grid-cols-2 gap-3 sm:mt-8">
                       <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
                         <p className="text-xs uppercase tracking-[0.14em] text-orange-100">Popular</p>
                         <p className="mt-1 text-sm font-semibold text-white">Moong, Masoor, Chana</p>
@@ -313,7 +379,7 @@ function Home() {
                       </div>
                     </div>
 
-                    <div className="mt-auto pt-8">
+                    <div className="mt-auto pt-6 sm:pt-8">
                       <div className="inline-flex items-center text-base font-semibold text-white transition-transform duration-300 group-hover:translate-x-2">
                         Explore Pulses
                         <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -352,7 +418,6 @@ function Home() {
         </section>
       </FadeIn>
 
-        {/* How It Works Section */}
         <FadeIn>
           <section id="how-it-works" className="my-16 bg-gradient-to-b from-white to-gray-50">
             <div className="max-w-7xl mx-auto px-6">
@@ -367,50 +432,50 @@ function Home() {
                 </div>
               </FadeIn>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 xl:gap-16">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-8 lg:gap-12 xl:gap-16">
                 <FadeIn delay={0.2}>
-                  <div className="group text-center p-8 lg:p-12 xl:p-16 rounded-2xl bg-gradient-to-br from-emerald-50 to-green-50 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 hover:scale-105 relative">
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  <div className="group relative rounded-2xl bg-gradient-to-br from-emerald-50 to-green-50 p-6 text-center transition-all duration-500 hover:-translate-y-4 hover:scale-105 hover:shadow-2xl sm:p-8 lg:p-12 xl:p-16">
+                    <div className="absolute -top-4 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 text-lg font-bold text-white shadow-lg sm:h-16 sm:w-16 sm:text-xl">
                       1
                     </div>
-                    <div className="inline-flex items-center justify-center w-20 h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full mb-6 lg:mb-8 group-hover:scale-110 transition-transform duration-300 mx-auto">
-                      <svg className="w-10 h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 transition-transform duration-300 group-hover:scale-110 sm:mb-6 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28">
+                      <svg className="h-8 w-8 text-white sm:h-10 sm:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
                       </svg>
                     </div>
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4">Farmers List Products</h3>
-                    <p className="text-gray-600 text-base lg:text-lg xl:text-xl leading-relaxed max-w-md mx-auto">Farmers add fresh produce with photos, prices, stock levels, and exact location coordinates</p>
+                    <h3 className="mb-3 text-lg font-bold text-gray-900 sm:text-xl lg:text-3xl xl:text-4xl">Farmers List Products</h3>
+                    <p className="mx-auto max-w-md text-sm leading-7 text-gray-600 sm:text-base lg:text-lg xl:text-xl">Farmers add fresh produce with photos, prices, stock levels, and exact location coordinates</p>
                   </div>
                 </FadeIn>
 
                 <FadeIn delay={0.3}>
-                  <div className="group text-center p-8 lg:p-12 xl:p-16 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 hover:scale-105 relative">
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  <div className="group relative rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6 text-center transition-all duration-500 hover:-translate-y-4 hover:scale-105 hover:shadow-2xl sm:p-8 lg:p-12 xl:p-16">
+                    <div className="absolute -top-4 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-lg font-bold text-white shadow-lg sm:h-16 sm:w-16 sm:text-xl">
                       2
                     </div>
-                    <div className="inline-flex items-center justify-center w-20 h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-6 lg:mb-8 group-hover:scale-110 transition-transform duration-300 mx-auto">
-                      <svg className="w-10 h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 transition-transform duration-300 group-hover:scale-110 sm:mb-6 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28">
+                      <svg className="h-8 w-8 text-white sm:h-10 sm:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4">Customers Browse Nearby</h3>
-                    <p className="text-gray-600 text-base lg:text-lg xl:text-xl leading-relaxed max-w-md mx-auto">Customers search by location to find fresh products from nearby farmers with real-time availability</p>
+                    <h3 className="mb-3 text-lg font-bold text-gray-900 sm:text-xl lg:text-3xl xl:text-4xl">Customers Browse Nearby</h3>
+                    <p className="mx-auto max-w-md text-sm leading-7 text-gray-600 sm:text-base lg:text-lg xl:text-xl">Customers search by location to find fresh products from nearby farmers with real-time availability</p>
                   </div>
                 </FadeIn>
 
                 <FadeIn delay={0.4}>
-                  <div className="group text-center p-8 lg:p-12 xl:p-16 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-4 hover:scale-105 relative">
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  <div className="group relative rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 p-6 text-center transition-all duration-500 hover:-translate-y-4 hover:scale-105 hover:shadow-2xl sm:p-8 lg:p-12 xl:p-16">
+                    <div className="absolute -top-4 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 text-lg font-bold text-white shadow-lg sm:h-16 sm:w-16 sm:text-xl">
                       3
                     </div>
-                    <div className="inline-flex items-center justify-center w-20 h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 bg-gradient-to-br from-orange-500 to-amber-600 rounded-full mb-6 lg:mb-8 group-hover:scale-110 transition-transform duration-300 mx-auto">
-                      <svg className="w-10 h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-600 transition-transform duration-300 group-hover:scale-110 sm:mb-6 sm:h-20 sm:w-20 lg:h-24 lg:w-24 xl:h-28 xl:w-28">
+                      <svg className="h-8 w-8 text-white sm:h-10 sm:w-10 lg:h-12 lg:w-12 xl:h-14 xl:w-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012 2m0 0h2a2 2 0 012 2v7m-4-7v7m-4-7v7" />
                       </svg>
                     </div>
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-4">Order or Visit Farmer</h3>
-                    <p className="text-gray-600 text-base lg:text-lg xl:text-xl leading-relaxed max-w-md mx-auto">Place orders online or arrange direct pickup/visit with farmers for the freshest experience</p>
+                    <h3 className="mb-3 text-lg font-bold text-gray-900 sm:text-xl lg:text-3xl xl:text-4xl">Order or Visit Farmer</h3>
+                    <p className="mx-auto max-w-md text-sm leading-7 text-gray-600 sm:text-base lg:text-lg xl:text-xl">Place orders online or arrange direct pickup/visit with farmers for the freshest experience</p>
                   </div>
                 </FadeIn>
               </div>
@@ -418,7 +483,6 @@ function Home() {
           </section>
         </FadeIn>
 
-      {/* Featured Products Section */}
       <FadeIn>
         <section className="py-16 lg:py-24 xl:py-32 bg-gradient-to-b from-gray-50 to-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
@@ -491,7 +555,6 @@ function Home() {
       </section>
       </FadeIn>
 
-      {/* Why Choose Us Section */}
       <FadeIn>
         <section className="py-16 lg:py-24 xl:py-32 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
@@ -547,106 +610,13 @@ function Home() {
         </section>
       </FadeIn>
 
-      {/* Testimonials Section */}
-      <FadeIn>
-        <section className="py-16 lg:py-24 xl:py-32 bg-gradient-to-br from-emerald-50 to-green-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-            <FadeIn delay={0.1}>
-              <div className="text-center mb-12 lg:mb-20">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold text-gray-900 mb-4 lg:mb-6">
-                  What Our Community Says
-                </h2>
-                <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                  Real stories from farmers and customers who are part of our marketplace
-                </p>
-              </div>
-            </FadeIn>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 xl:gap-10">
-              <FadeIn delay={0.2}>
-                <div className="group bg-white rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 xl:p-12 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-                  <div className="flex items-center mb-6 lg:mb-8">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg lg:text-xl xl:text-2xl">
-                      S
-                    </div>
-                    <div className="ml-4 lg:ml-6">
-                      <h4 className="font-bold text-gray-900 text-lg lg:text-xl xl:text-2xl">Sarah Johnson</h4>
-                      <p className="text-gray-600 text-sm lg:text-base xl:text-lg">Customer</p>
-                    </div>
-                  </div>
-                  <div className="flex text-emerald-500 mb-4 lg:mb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <svg key={i} className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-gray-700 italic leading-relaxed text-base lg:text-lg xl:text-xl">
-                    "The freshest vegetables I've ever tasted! Buying directly from local farmers has completely changed my weekly grocery shopping. The quality is unmatched."
-                  </p>
-                </div>
-              </FadeIn>
-
-              <FadeIn delay={0.3}>
-                <div className="group bg-white rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 xl:p-12 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-                  <div className="flex items-center mb-6 lg:mb-8">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-lg lg:text-xl xl:text-2xl">
-                      M
-                    </div>
-                    <div className="ml-4 lg:ml-6">
-                      <h4 className="font-bold text-gray-900 text-lg lg:text-xl xl:text-2xl">Michael Chen</h4>
-                      <p className="text-gray-600 text-sm lg:text-base xl:text-lg">Farmer</p>
-                    </div>
-                  </div>
-                  <div className="flex text-emerald-500 mb-4 lg:mb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <svg key={i} className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-gray-700 italic leading-relaxed text-base lg:text-lg xl:text-xl">
-                    "This platform has transformed my farming business. I now sell directly to customers and get fair prices for my hard work. The support team is amazing!"
-                  </p>
-                </div>
-              </FadeIn>
-
-              <FadeIn delay={0.4}>
-                <div className="group bg-white rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 xl:p-12 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
-                  <div className="flex items-center mb-6 lg:mb-8">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 xl:w-20 xl:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg lg:text-xl xl:text-2xl">
-                      A
-                    </div>
-                    <div className="ml-4 lg:ml-6">
-                      <h4 className="font-bold text-gray-900 text-lg lg:text-xl xl:text-2xl">Anna Rodriguez</h4>
-                      <p className="text-gray-600 text-sm lg:text-base xl:text-lg">Customer</p>
-                    </div>
-                  </div>
-                  <div className="flex text-emerald-500 mb-4 lg:mb-6">
-                    {[...Array(5)].map((_, i) => (
-                      <svg key={i} className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 xl:w-7 xl:h-7 fill-current" viewBox="0 0 24 24">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-gray-700 italic leading-relaxed text-base lg:text-lg xl:text-xl">
-                    "I love supporting local farmers and knowing exactly where my food comes from. The platform makes it so easy to find fresh, seasonal produce in my area."
-                  </p>
-                </div>
-              </FadeIn>
-            </div>
-          </div>
-        </section>
-      </FadeIn>
-
-      {/* CTA Section */}
       <FadeIn>
         <section className="py-16 lg:py-24 xl:py-32 bg-gradient-to-r from-emerald-600 to-green-600">
           <div className="max-w-6xl mx-auto text-center px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
             <FadeIn delay={0.1}>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-bold text-white mb-4 lg:mb-6 xl:mb-8">
-              Start Buying or Selling Today
-            </h2>
+              <h2 className="text-3xl font-bold text-white mb-4 lg:mb-6 xl:mb-8 sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl">
+                Start Buying or Selling Today
+              </h2>
             </FadeIn>
             <FadeIn delay={0.2}>
               <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-emerald-100 mb-8 lg:mb-12 xl:mb-16 leading-relaxed max-w-4xl mx-auto">
@@ -654,16 +624,16 @@ function Home() {
               </p>
             </FadeIn>
             <FadeIn delay={0.3}>
-              <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 xl:gap-8 justify-center items-center">
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4 lg:gap-6 xl:gap-8">
                 <Link
                   to="/register"
-                  className="bg-white text-emerald-600 px-8 lg:px-12 xl:px-16 py-4 lg:py-5 xl:py-6 rounded-xl font-bold text-lg lg:text-xl xl:text-2xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-emerald-500/25 w-full sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-4 text-lg font-bold text-emerald-600 shadow-2xl transition-all duration-300 hover:bg-gray-50 hover:shadow-emerald-500/25 sm:w-auto sm:px-8 lg:px-12 xl:px-16 lg:py-5 xl:py-6 lg:text-xl xl:text-2xl"
                 >
                   Get Started Free
                 </Link>
                 <Link
                   to="/products"
-                  className="border-2 border-white text-white px-8 lg:px-12 xl:px-16 py-4 lg:py-5 xl:py-6 rounded-xl font-bold text-lg lg:text-xl xl:text-2xl hover:bg-white hover:text-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-white/25 w-full sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-2xl border-2 border-white px-6 py-4 text-lg font-bold text-white shadow-xl transition-all duration-300 hover:bg-white hover:text-emerald-600 hover:shadow-white/25 sm:w-auto sm:px-8 lg:px-12 xl:px-16 lg:py-5 xl:py-6 lg:text-xl xl:text-2xl"
                 >
                   Browse Products
                 </Link>
