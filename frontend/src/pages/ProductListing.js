@@ -17,6 +17,82 @@ import {
   getNearbyProducts,
   getProductsByFarmer,
 } from "../services/authService";
+import { getSpeechToTextConfig } from "../services/speechToTextService";
+
+const IBM_VOICE_SEARCH_SAMPLE_RATE = 16000;
+const IBM_VOICE_SEARCH_MODEL = "en-US_BroadbandModel";
+
+function downsampleFloat32Buffer(buffer, inputSampleRate, outputSampleRate) {
+  if (outputSampleRate >= inputSampleRate) {
+    return buffer;
+  }
+
+  const ratio = inputSampleRate / outputSampleRate;
+  const newLength = Math.round(buffer.length / ratio);
+  const result = new Int16Array(newLength);
+  let bufferOffset = 0;
+
+  for (let i = 0; i < newLength; i += 1) {
+    const nextOffset = Math.round((i + 1) * ratio);
+    let sum = 0;
+    let count = 0;
+
+    for (; bufferOffset < nextOffset && bufferOffset < buffer.length; bufferOffset += 1) {
+      sum += buffer[bufferOffset];
+      count += 1;
+    }
+
+    const sample = count > 0 ? sum / count : 0;
+    const clampedSample = Math.max(-1, Math.min(1, sample));
+    result[i] = clampedSample < 0 ? clampedSample * 0x8000 : clampedSample * 0x7fff;
+  }
+
+  return result;
+}
+
+function normalizeVoiceText(text) {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .replace(/^[,.\s]+|[,.\s]+$/g, "")
+    .trim();
+}
+
+function buildSpeechKeywords(products) {
+  const keywordSet = new Set([
+    "product",
+    "products",
+    "vegetable",
+    "vegetables",
+    "fruit",
+    "fruits",
+    "grain",
+    "grains",
+    "pulse",
+    "pulses",
+    "organic",
+    "fresh",
+  ]);
+
+  products.forEach((product) => {
+    const name = normalizeVoiceText(product?.name).toLowerCase();
+    const category = normalizeVoiceText(product?.category).toLowerCase();
+
+    if (name) {
+      keywordSet.add(name);
+      name.split(/\s+/).forEach((token) => {
+        if (token.length > 2) {
+          keywordSet.add(token);
+        }
+      });
+    }
+
+    if (category) {
+      keywordSet.add(category);
+    }
+  });
+
+  return Array.from(keywordSet).slice(0, 100);
+}
 
 function ProductListing() {
   const [searchParams] = useSearchParams();
@@ -48,11 +124,74 @@ function ProductListing() {
   const [selectedFarmerId, setSelectedFarmerId] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [nearestFarmerId, setNearestFarmerId] = useState(null);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState("");
+  const [voiceError, setVoiceError] = useState("");
   const resultsSectionRef = useRef(null);
+  const speechSocketRef = useRef(null);
+  const speechStreamRef = useRef(null);
+  const speechAudioContextRef = useRef(null);
+  const speechProcessorRef = useRef(null);
+  const speechGainRef = useRef(null);
+  const speechSourceRef = useRef(null);
+  const speechStopRequestedRef = useRef(false);
+  const speechKeywords = useMemo(() => buildSpeechKeywords(products), [products]);
 
   useEffect(() => {
     setSelectedCategory(normalizeCategoryParam(searchParams.get("category")));
   }, [searchParams]);
+
+  useEffect(() => {
+    return () => {
+      speechStopRequestedRef.current = true;
+
+      if (speechSocketRef.current) {
+        try {
+          speechSocketRef.current.close();
+        } catch (_error) {
+          // Ignore cleanup errors.
+        }
+        speechSocketRef.current = null;
+      }
+
+      if (speechProcessorRef.current) {
+        try {
+          speechProcessorRef.current.disconnect();
+        } catch (_error) {
+          // Ignore cleanup errors.
+        }
+        speechProcessorRef.current = null;
+      }
+
+      if (speechSourceRef.current) {
+        try {
+          speechSourceRef.current.disconnect();
+        } catch (_error) {
+          // Ignore cleanup errors.
+        }
+        speechSourceRef.current = null;
+      }
+
+      if (speechGainRef.current) {
+        try {
+          speechGainRef.current.disconnect();
+        } catch (_error) {
+          // Ignore cleanup errors.
+        }
+        speechGainRef.current = null;
+      }
+
+      if (speechStreamRef.current) {
+        speechStreamRef.current.getTracks().forEach((track) => track.stop());
+        speechStreamRef.current = null;
+      }
+
+      if (speechAudioContextRef.current) {
+        speechAudioContextRef.current.close().catch(() => {});
+        speechAudioContextRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isFarmer && user?.id) {
@@ -164,6 +303,281 @@ function ProductListing() {
         block: "start",
       });
     });
+  };
+
+  const stopVoiceSearch = () => {
+    speechStopRequestedRef.current = true;
+    setIsVoiceListening(false);
+
+    if (speechSocketRef.current) {
+      try {
+        speechSocketRef.current.close();
+      } catch (_error) {
+        // Ignore cleanup errors.
+      }
+      speechSocketRef.current = null;
+    }
+
+    if (speechProcessorRef.current) {
+      try {
+        speechProcessorRef.current.disconnect();
+      } catch (_error) {
+        // Ignore cleanup errors.
+      }
+      speechProcessorRef.current = null;
+    }
+
+    if (speechSourceRef.current) {
+      try {
+        speechSourceRef.current.disconnect();
+      } catch (_error) {
+        // Ignore cleanup errors.
+      }
+      speechSourceRef.current = null;
+    }
+
+    if (speechGainRef.current) {
+      try {
+        speechGainRef.current.disconnect();
+      } catch (_error) {
+        // Ignore cleanup errors.
+      }
+      speechGainRef.current = null;
+    }
+
+    if (speechStreamRef.current) {
+      speechStreamRef.current.getTracks().forEach((track) => track.stop());
+      speechStreamRef.current = null;
+    }
+
+    if (speechAudioContextRef.current) {
+      speechAudioContextRef.current.close().catch(() => {});
+      speechAudioContextRef.current = null;
+    }
+  };
+
+  const handleVoiceTranscript = (transcript, isFinal) => {
+    const cleanedTranscript = normalizeVoiceText(transcript);
+
+    if (!cleanedTranscript) {
+      return;
+    }
+
+    setSearchTerm(cleanedTranscript);
+
+    if (isFinal) {
+      window.requestAnimationFrame(() => {
+        resultsSectionRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    }
+  };
+
+  const startVoiceSearch = async () => {
+    if (isVoiceListening) {
+      stopVoiceSearch();
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext) {
+      setVoiceError("Your browser does not support microphone transcription.");
+      return;
+    }
+
+    try {
+      setVoiceError("");
+      setVoiceStatus("Preparing IBM speech recognition...");
+      speechStopRequestedRef.current = false;
+
+      const { data } = await getSpeechToTextConfig();
+      const wsUrl = data?.wsUrl;
+      const accessToken = data?.accessToken;
+      const model = data?.model || IBM_VOICE_SEARCH_MODEL;
+
+      if (!wsUrl || !accessToken) {
+        throw new Error("IBM speech-to-text is not configured correctly.");
+      }
+
+      const audioContext = new window.AudioContext();
+      await audioContext.resume();
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      const socketUrl = new URL(`${wsUrl.replace(/\/$/, "")}/v1/recognize`);
+      socketUrl.searchParams.set("access_token", accessToken);
+      socketUrl.searchParams.set("model", model);
+
+      const socket = new WebSocket(socketUrl.toString());
+      socket.binaryType = "arraybuffer";
+
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      const gain = audioContext.createGain();
+      gain.gain.value = 0;
+
+      speechAudioContextRef.current = audioContext;
+      speechStreamRef.current = stream;
+      speechSocketRef.current = socket;
+      speechSourceRef.current = source;
+      speechProcessorRef.current = processor;
+      speechGainRef.current = gain;
+
+      const sendAudioChunk = (event) => {
+        if (speechStopRequestedRef.current || socket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+
+        const floatBuffer = event.inputBuffer.getChannelData(0);
+        const pcmBuffer = downsampleFloat32Buffer(
+          floatBuffer,
+          audioContext.sampleRate,
+          IBM_VOICE_SEARCH_SAMPLE_RATE
+        );
+
+        if (pcmBuffer.length > 0) {
+          socket.send(pcmBuffer.buffer);
+        }
+      };
+
+      socket.onopen = () => {
+        if (speechStopRequestedRef.current) {
+          return;
+        }
+
+        setIsVoiceListening(true);
+        setVoiceStatus("Listening... speak a product name.");
+
+        const startMessage = {
+          action: "start",
+          "content-type": `audio/l16;rate=${IBM_VOICE_SEARCH_SAMPLE_RATE};channels=1`,
+          interim_results: true,
+          smart_formatting: true,
+          profanity_filter: true,
+          inactivity_timeout: -1,
+          end_of_phrase_silence_time: 0.4,
+          background_audio_suppression: 0.4,
+          model,
+        };
+
+        if (model !== "en-US" && speechKeywords.length > 0) {
+          startMessage.keywords = speechKeywords;
+          startMessage.keywords_threshold = 0.25;
+        }
+
+        socket.send(JSON.stringify(startMessage));
+
+        source.connect(processor);
+        processor.connect(gain);
+        gain.connect(audioContext.destination);
+        processor.onaudioprocess = sendAudioChunk;
+      };
+
+      socket.onmessage = (event) => {
+        if (typeof event.data !== "string") {
+          return;
+        }
+
+        let payload;
+
+        try {
+          payload = JSON.parse(event.data);
+        } catch (_parseError) {
+          return;
+        }
+
+        if (payload?.error) {
+          setVoiceError(payload.error || "IBM speech recognition returned an error.");
+          setVoiceStatus("");
+          stopVoiceSearch();
+          return;
+        }
+
+        const result = payload?.results?.[0];
+        const transcript = result?.alternatives?.[0]?.transcript || "";
+
+        if (!transcript) {
+          return;
+        }
+
+        handleVoiceTranscript(transcript, Boolean(result?.final));
+
+        if (result?.final) {
+          setVoiceStatus("Search updated from your voice input.");
+        }
+      };
+
+      socket.onerror = () => {
+        if (!speechStopRequestedRef.current) {
+          setVoiceError("The speech-to-text connection failed.");
+          setVoiceStatus("");
+          stopVoiceSearch();
+        }
+      };
+
+      socket.onclose = () => {
+        setIsVoiceListening(false);
+
+        if (!speechStopRequestedRef.current) {
+          setVoiceStatus((currentStatus) => currentStatus || "Voice search stopped.");
+        }
+
+        if (speechProcessorRef.current) {
+          try {
+            speechProcessorRef.current.disconnect();
+          } catch (_error) {
+            // Ignore cleanup errors.
+          }
+        }
+
+        if (speechSourceRef.current) {
+          try {
+            speechSourceRef.current.disconnect();
+          } catch (_error) {
+            // Ignore cleanup errors.
+          }
+        }
+
+        if (speechGainRef.current) {
+          try {
+            speechGainRef.current.disconnect();
+          } catch (_error) {
+            // Ignore cleanup errors.
+          }
+        }
+
+        if (speechStreamRef.current) {
+          speechStreamRef.current.getTracks().forEach((track) => track.stop());
+        }
+
+        if (speechAudioContextRef.current) {
+          speechAudioContextRef.current.close().catch(() => {});
+        }
+
+        speechSocketRef.current = null;
+        speechProcessorRef.current = null;
+        speechSourceRef.current = null;
+        speechGainRef.current = null;
+        speechStreamRef.current = null;
+        speechAudioContextRef.current = null;
+      };
+    } catch (requestError) {
+      stopVoiceSearch();
+      setVoiceError(
+        requestError?.response?.data?.message ||
+          requestError?.message ||
+          "Unable to start voice search."
+      );
+      setVoiceStatus("");
+    }
   };
 
   const farmerGroups = useMemo(() => {
@@ -462,23 +876,102 @@ function ProductListing() {
                       <input
                         type="search"
                         value={searchTerm}
-                        onChange={(event) => setSearchTerm(event.target.value)}
+                        onChange={(event) => {
+                          setSearchTerm(event.target.value);
+                          if (!event.target.value.trim()) {
+                            setVoiceStatus("");
+                          }
+                        }}
                         placeholder="Search by product name..."
-                        className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
+                        className="w-full px-4 py-3 pr-36 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
                       />
-                      {searchTerm && (
+                      <div className="absolute inset-y-0 right-3 flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => setSearchTerm("")}
-                          className="absolute inset-y-0 right-3 inline-flex items-center text-gray-400 hover:text-emerald-600 transition-colors"
-                          aria-label="Clear search"
+                          onClick={startVoiceSearch}
+                          className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                            isVoiceListening
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm"
+                              : "border-transparent bg-transparent text-gray-500 hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700"
+                          }`}
+                          aria-pressed={isVoiceListening}
+                          aria-label={isVoiceListening ? "Stop voice search" : "Start voice search"}
+                          title={isVoiceListening ? "Stop voice search" : "Search by voice"}
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          {isVoiceListening && (
+                            <span className="absolute inset-0 rounded-full bg-emerald-400/20 animate-ping" />
+                          )}
+                          <svg
+                            className={`relative h-5 w-5 ${isVoiceListening ? "animate-pulse" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            {isVoiceListening ? (
+                              <>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18v4" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 22h8" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-14 0" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h6" />
+                              </>
+                            ) : (
+                              <>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 1a3 3 0 00-3 3v7a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11a7 7 0 0014 0" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18v4" />
+                              </>
+                            )}
                           </svg>
                         </button>
-                      )}
+                        {(searchTerm || isVoiceListening) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isVoiceListening) {
+                                stopVoiceSearch();
+                              }
+
+                              setSearchTerm("");
+                              setVoiceStatus("");
+                            }}
+                            className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                              isVoiceListening
+                                ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 focus:ring-rose-500"
+                                : "border-transparent bg-transparent text-gray-400 hover:border-gray-200 hover:bg-gray-50 hover:text-gray-600 focus:ring-emerald-500"
+                            }`}
+                            aria-label={isVoiceListening ? "Stop voice search and clear" : "Clear search"}
+                            title={isVoiceListening ? "Stop voice search and clear" : "Clear search"}
+                          >
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              {isVoiceListening ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h6v6H9z" />
+                              ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l12 12M6 18L18 6" />
+                              )}
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 font-medium ${
+                          isVoiceListening
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {isVoiceListening ? "Listening to IBM Speech to Text" : "Voice search ready"}
+                      </span>
+                    </div>
+
+                    {(voiceStatus || voiceError) && (
+                      <p className={`text-sm ${voiceError ? "text-red-600" : "text-gray-600"}`}>
+                        {voiceError || voiceStatus}
+                      </p>
+                    )}
 
                     {searchTerm.trim() && (
                       <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-3 sm:p-4">

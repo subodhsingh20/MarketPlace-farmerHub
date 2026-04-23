@@ -18,6 +18,7 @@ Farmer Marketplace is a full-stack marketplace for connecting customers with nea
 - Real-time socket updates
 - Cloudant-backed persistence for users, products, orders, and chat messages
 - Razorpay payment flow with test and live support
+- Customer voice search for products using IBM Speech to Text
 
 ## Repository Structure
 
@@ -42,6 +43,9 @@ Copy [backend/.env.example](backend/.env.example) and set:
 - `PAYMENT_MODE`
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
+- `IBM_STT_APIKEY`
+- `IBM_STT_URL`
+- `IBM_STT_MODEL`
 
 `CLIENT_URL` can be a comma-separated list if you need multiple allowed frontend origins.
 
@@ -116,6 +120,9 @@ CLIENT_URL=https://YOUR-AMPLIFY-DOMAIN.amplifyapp.com
 PAYMENT_MODE=test
 RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
+IBM_STT_APIKEY=YOUR_IBM_STT_API_KEY
+IBM_STT_URL=https://api.au-syd.speech-to-text.watson.cloud.ibm.com/instances/YOUR_INSTANCE_ID
+IBM_STT_MODEL=en-US
 ```
 
 Frontend Amplify environment example:
@@ -165,3 +172,5 @@ Current image names:
 - Use `CLOUDANT_DB_PREFIX=farmer_marketplace` unless you intentionally want a different database namespace
 - If you enable live Razorpay, set `PAYMENT_MODE=live` and provide both Razorpay keys on the backend and the frontend key ID
 - The frontend now safely handles empty or malformed featured product responses
+- Voice search uses the browser microphone, so it requires a secure context such as `localhost` or HTTPS
+- For best transcription quality, keep `IBM_STT_MODEL` on `en-US` unless you specifically need a previous-generation model for keyword bias

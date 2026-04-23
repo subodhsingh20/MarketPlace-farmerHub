@@ -11,6 +11,7 @@ const ratingRoutes = require("./routes/ratingRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const farmerRoutes = require("./routes/farmerRoutes");
 const customerRoutes = require("./routes/customerRoutes");
+const speechRoutes = require("./routes/speechRoutes");
 const { initializeSocket } = require("./socket");
 const { setIo } = require("./socketInstance");
 const { protect } = require("./middleware/authMiddleware");
@@ -71,6 +72,7 @@ app.use("/api/ratings", ratingRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/farmers", farmerRoutes);
 app.use("/api/customer", customerRoutes);
+app.use("/api/speech-to-text", speechRoutes);
 
 app.get("/api/protected", protect, (req, res) => {
   res.json({
@@ -108,6 +110,14 @@ const startServer = async () => {
 
     if (!process.env.CLOUDANT_API_KEY) {
       console.warn("CLOUDANT_API_KEY is not set. Set the Cloudant API key before starting.");
+    }
+
+    if (!process.env.IBM_STT_APIKEY) {
+      console.warn("IBM_STT_APIKEY is not set. Voice search will be unavailable.");
+    }
+
+    if (!process.env.IBM_STT_URL) {
+      console.warn("IBM_STT_URL is not set. Voice search will be unavailable.");
     }
 
     await initializeCloudant();
