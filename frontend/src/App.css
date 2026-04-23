@@ -1,9 +1,14 @@
 .app-shell {
   min-height: 100vh;
+  position: relative;
 }
 
 html {
   font-size: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(246, 202, 99, 0.18), transparent 18%),
+    radial-gradient(circle at 85% 20%, rgba(34, 197, 94, 0.1), transparent 22%),
+    linear-gradient(180deg, #f6faf5 0%, #edf5ec 52%, #e5eee3 100%);
 }
 
 body {
@@ -25,17 +30,21 @@ aside {
 
 .responsive-shell {
   margin: 0 auto;
-  max-width: 80rem;
-  padding: 0.85rem 1rem;
+  max-width: 84rem;
+  padding: 1rem 1rem 2rem;
 }
 
 .responsive-section {
-  padding: 1rem 0;
+  padding: 1.1rem 0;
 }
 
 .responsive-card {
-  border-radius: 1.5rem;
-  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 1.75rem;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 24px 70px rgba(31, 41, 55, 0.08);
+  backdrop-filter: blur(18px);
+  padding: 1.35rem;
 }
 
 .responsive-title {
@@ -54,7 +63,8 @@ aside {
   border-radius: 9999px;
   font-size: 0.82rem;
   font-weight: 700;
-  padding: 0.45rem 0.85rem;
+  letter-spacing: 0.02em;
+  padding: 0.45rem 0.9rem;
 }
 
 .responsive-cta {
@@ -64,10 +74,10 @@ aside {
 
 .navbar {
   align-items: center;
-  backdrop-filter: blur(16px);
-  background: linear-gradient(135deg, rgba(20, 65, 44, 0.96), rgba(15, 43, 35, 0.94));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 18px 36px rgba(14, 34, 27, 0.18);
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(11, 38, 27, 0.92), rgba(17, 56, 39, 0.88));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(14, 34, 27, 0.18);
   display: flex;
   gap: 1.25rem;
   justify-content: space-between;
@@ -110,9 +120,9 @@ aside {
 
 .navbar__brand-mark {
   align-items: center;
-  background: linear-gradient(135deg, #f6ca63, #d98d2b);
-  border-radius: 16px;
-  box-shadow: 0 10px 22px rgba(245, 176, 55, 0.28);
+  background: linear-gradient(135deg, #f9d86d, #f1a93b);
+  border-radius: 18px;
+  box-shadow: 0 10px 22px rgba(245, 176, 55, 0.32);
   color: #153328;
   display: inline-flex;
   font-size: 1.3rem;
@@ -127,9 +137,10 @@ aside {
 }
 
 .navbar__brand-title {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: 1.15rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .navbar__brand-subtitle {
@@ -165,7 +176,7 @@ aside {
   min-height: 42px;
   padding: 0.7rem 1rem;
   text-decoration: none;
-  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .navbar__link,
@@ -184,7 +195,7 @@ aside {
 }
 
 .navbar__link--active {
-  background: linear-gradient(135deg, #f6ca63, #f2b744);
+  background: linear-gradient(135deg, #f9d86d, #f1b74a);
   color: #173128;
 }
 
@@ -206,8 +217,8 @@ aside {
   animation: fadeUp 0.22s ease;
   background: rgba(255, 250, 237, 0.98);
   border: 1px solid rgba(55, 101, 68, 0.14);
-  border-radius: 18px;
-  box-shadow: 0 24px 40px rgba(20, 39, 30, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 24px 40px rgba(20, 39, 30, 0.16);
   color: #173127;
   display: grid;
   gap: 0.2rem;
@@ -221,10 +232,10 @@ aside {
 
 .cart-flyout {
   animation: fadeUp 0.2s ease;
-  background: rgba(255, 252, 245, 0.99);
-  border: 1px solid rgba(44, 95, 64, 0.13);
-  border-radius: 24px;
-  box-shadow: 0 30px 60px rgba(18, 39, 29, 0.22);
+  background: rgba(255, 252, 245, 0.98);
+  border: 1px solid rgba(44, 95, 64, 0.12);
+  border-radius: 26px;
+  box-shadow: 0 30px 60px rgba(18, 39, 29, 0.18);
   color: #173127;
   display: grid;
   gap: 1rem;
@@ -620,7 +631,7 @@ aside {
 }
 
 .marketplace-card__media {
-  background: linear-gradient(180deg, #f9f4e7, #f2ebdc);
+  background: linear-gradient(180deg, #f9f6ef, #f1ead9);
   display: flex;
   min-height: 200px;
   padding: 0.9rem 0.9rem 0;
@@ -813,7 +824,7 @@ aside {
 }
 
 .button-primary {
-  background: linear-gradient(135deg, #2f7c45, #1d5a34);
+  background: linear-gradient(135deg, #2f7c45, #184f2c);
   border: 0;
   color: #fffdf7;
   box-shadow: 0 4px 14px 0 rgba(47, 124, 69, 0.3);
@@ -830,7 +841,7 @@ aside {
 }
 
 .button-secondary {
-  background: #fff5db;
+  background: #fff6df;
   border: 1px solid rgba(144, 85, 26, 0.18);
   color: #75471a;
   box-shadow: 0 2px 8px 0 rgba(117, 71, 26, 0.1);
@@ -870,7 +881,7 @@ aside {
 .chat-messages {
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(86, 125, 89, 0.15);
-  border-radius: 24px;
+  border-radius: 26px;
   display: grid;
   gap: 0.8rem;
   max-height: 480px;
@@ -880,7 +891,7 @@ aside {
 }
 
 .chat-bubble {
-  background: #f2f7ef;
+  background: #f3f8f0;
   border-radius: 18px;
   display: grid;
   gap: 0.3rem;
@@ -889,8 +900,61 @@ aside {
 }
 
 .chat-bubble--mine {
-  background: #dfeedd;
+  background: #dcebd7;
   justify-self: end;
+}
+
+.premium-panel,
+.premium-surface {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(18px);
+}
+
+.premium-panel {
+  border-radius: 28px;
+}
+
+.premium-surface {
+  border-radius: 24px;
+}
+
+.premium-heading {
+  color: #0f172a;
+  letter-spacing: -0.03em;
+}
+
+.premium-subtext {
+  color: #556170;
+}
+
+.premium-input {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  color: #102033;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+}
+
+.premium-input:focus {
+  border-color: rgba(34, 197, 94, 0.36);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
+}
+
+.premium-button {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 2.9rem;
+  padding: 0.85rem 1.2rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.premium-button:hover {
+  transform: translateY(-1px);
 }
 
 .chat-form {

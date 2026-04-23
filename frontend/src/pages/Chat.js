@@ -530,18 +530,26 @@ function Chat() {
   };
 
   return (
-    <section className="page">
+    <section
+      className="page page--chat"
+      style={{
+        background: "linear-gradient(135deg, rgba(2,6,23,0.98), rgba(4,120,87,0.84), rgba(15,23,42,0.98))",
+        borderColor: "rgba(255,255,255,0.08)",
+        boxShadow: "0 28px 70px rgba(2,6,23,0.32)",
+        color: "#e5eef5",
+      }}
+    >
       <div className="page__header">
         <div className="page__header-copy max-w-3xl gap-3">
-          <span className="page__eyebrow">Chat</span>
-          <h1 className="max-w-[14ch]">
+          <span className="page__eyebrow !text-emerald-300">Chat</span>
+          <h1 className="max-w-[14ch] !text-white">
             {otherUserId
               ? `Chat with ${otherUserName}`
               : currentUserRole === "farmer"
                 ? "Farmer messages"
                 : "Customer inbox"}
           </h1>
-          <p>
+          <p className="!text-slate-300">
             {currentUserRole === "farmer"
               ? "Manage farmer conversations in one place with fast replies and real-time updates."
               : "Manage customer conversations in one place with fast replies and real-time updates."}
@@ -556,10 +564,10 @@ function Chat() {
       )}
 
       <div className="grid gap-4 xl:grid-cols-[16rem_minmax(0,1fr)]">
-        <aside className="overflow-hidden rounded-[1.35rem] border border-gray-100 bg-white shadow-xl">
-          <div className="border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3.5">
-            <h2 className="text-base font-bold text-gray-900 sm:text-lg">Inbox</h2>
-            <p className="text-sm text-gray-600">
+        <aside className="rounded-[1.75rem] border border-white/10 bg-slate-950/72 overflow-hidden p-0 shadow-[0_20px_50px_rgba(15,23,42,0.28)] backdrop-blur-xl">
+          <div className="border-b border-white/10 bg-gradient-to-r from-emerald-500/10 via-white/5 to-lime-500/10 px-4 py-3.5">
+            <h2 className="text-base font-bold text-white sm:text-lg">Inbox</h2>
+            <p className="text-sm text-slate-300">
               {isLoadingConversations
                 ? "Loading conversations..."
                 : `${conversations.length} active chat${conversations.length === 1 ? "" : "s"}`}
@@ -568,13 +576,13 @@ function Chat() {
 
           <div className="max-h-[31rem] overflow-y-auto p-3">
             {isLoadingConversations ? (
-              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+              <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-6 text-center text-sm text-slate-300 backdrop-blur-md">
                 Loading inbox...
               </div>
             ) : conversations.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center">
-                <p className="font-semibold text-gray-700">No messages yet</p>
-                <p className="mt-1 text-sm text-gray-500">
+              <div className="rounded-2xl border border-dashed border-white/10 bg-white/6 px-4 py-8 text-center backdrop-blur-md">
+                <p className="font-semibold text-white">No messages yet</p>
+                <p className="mt-1 text-sm text-slate-300">
                   Your active chats will show up here.
                 </p>
               </div>
@@ -589,32 +597,32 @@ function Chat() {
                       to={`/chat?user=${conversation.userId}&name=${encodeURIComponent(
                         conversation.name
                       )}`}
-                      className={`block rounded-2xl border px-3.5 py-3 transition ${
+                      className={`block rounded-2xl border px-3.5 py-3 transition duration-300 ${
                         isActive
-                          ? "border-emerald-300 bg-emerald-50 shadow-sm"
-                          : "border-gray-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/60"
+                          ? "border-emerald-400/20 bg-emerald-500/10 shadow-sm"
+                          : "border-white/10 bg-white/6 hover:-translate-y-0.5 hover:border-emerald-300/20 hover:bg-white/10 hover:shadow-md"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="truncate font-semibold text-gray-900">
+                            <p className="truncate font-semibold text-white">
                               {conversation.name}
                             </p>
                             {conversation.unreadCount > 0 && (
-                              <span className="inline-flex min-h-[1.3rem] min-w-[1.3rem] items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-bold text-white">
+                              <span className="inline-flex min-h-[1.3rem] min-w-[1.3rem] items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white">
                                 {conversation.unreadCount}
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 text-[11px] capitalize tracking-[0.12em] text-emerald-700">
+                          <p className="mt-1 text-[11px] capitalize tracking-[0.12em] text-emerald-200">
                             {conversation.role || "user"}
                           </p>
-                          <p className="mt-2 line-clamp-2 text-sm text-gray-600">
+                          <p className="mt-2 line-clamp-2 text-sm text-slate-300">
                             {getConversationPreview(conversation)}
                           </p>
                         </div>
-                        <span className="shrink-0 text-[11px] text-gray-400">
+                        <span className="shrink-0 text-[11px] text-slate-400">
                           {formatConversationTime(conversation.timestamp)}
                         </span>
                       </div>
@@ -629,7 +637,7 @@ function Chat() {
         <div>
           {otherUserId ? (
             isLoading ? (
-              <div className="chat-panel">
+              <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/72 shadow-[0_20px_50px_rgba(15,23,42,0.28)] backdrop-blur-xl">
                 <div className="empty-state">Loading conversation...</div>
               </div>
             ) : (
@@ -654,10 +662,10 @@ function Chat() {
               />
             )
           ) : (
-            <div className="rounded-[1.35rem] border border-gray-100 bg-white px-6 py-12 text-center shadow-xl sm:px-8">
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+            <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/72 px-6 py-12 text-center shadow-[0_20px_50px_rgba(15,23,42,0.28)] backdrop-blur-xl sm:px-8">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15">
                 <svg
-                  className="h-7 w-7 text-emerald-600"
+                  className="h-7 w-7 text-emerald-200"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -670,8 +678,8 @@ function Chat() {
                   />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Choose a conversation</h2>
-              <p className="mt-2 text-gray-600">
+              <h2 className="text-2xl font-bold text-white">Choose a conversation</h2>
+              <p className="mt-2 text-slate-300">
                 Pick a thread from the inbox to view history and reply in real time.
               </p>
             </div>

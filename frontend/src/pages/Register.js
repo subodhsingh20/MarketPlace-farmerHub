@@ -90,7 +90,7 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 flex items-center justify-center px-4 py-12">
       <FadeIn>
         <div className="max-w-7xl mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
@@ -98,20 +98,20 @@ function Register() {
             <div className="space-y-8">
               <FadeIn delay={0.1}>
                 <div>
-                  <span className="inline-block px-4 py-2 bg-emerald-100 text-emerald-800 text-sm font-semibold rounded-full mb-6">Create account</span>
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">Join the marketplace as a farmer or customer.</h1>
-                  <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
+                  <span className="inline-block px-4 py-2 bg-white/10 text-emerald-200 text-sm font-semibold rounded-full mb-6 backdrop-blur-md">Create account</span>
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">Join the marketplace as a farmer or customer.</h1>
+                  <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
                     Set up your profile, save your current location, and unlock the right dashboard experience from the start.
                   </p>
                 </div>
               </FadeIn>
 
               <FadeIn delay={0.2}>
-                <div className="bg-white rounded-2xl lg:rounded-3xl p-8 lg:p-12 shadow-2xl border border-gray-100">
+                <div className="premium-panel p-8 lg:p-12">
                   <form className="space-y-6" onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-2">
                           Full Name
                         </label>
                         <input
@@ -122,12 +122,12 @@ function Register() {
                           value={formData.name}
                           onChange={handleChange}
                           required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
+                          className="w-full px-4 py-3 premium-input transition-all duration-300 text-gray-900 placeholder-gray-500"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
                           Email Address
                         </label>
                         <input
@@ -138,14 +138,14 @@ function Register() {
                           value={formData.email}
                           onChange={handleChange}
                           required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
+                          className="w-full px-4 py-3 premium-input transition-all duration-300 text-gray-900 placeholder-gray-500"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 mb-2">
                           Phone Number
                         </label>
                         <input
@@ -156,12 +156,12 @@ function Register() {
                           value={formData.phone}
                           onChange={handleChange}
                           required
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
+                          className="w-full px-4 py-3 premium-input transition-all duration-300 text-gray-900 placeholder-gray-500"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="role" className="block text-sm font-semibold text-slate-700 mb-2">
                           I am a
                         </label>
                         <select
@@ -169,7 +169,7 @@ function Register() {
                           name="role"
                           value={formData.role}
                           onChange={handleChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 bg-white"
+                          className="w-full px-4 py-3 premium-input transition-all duration-300 text-gray-900 bg-white"
                         >
                           <option value="customer">Customer</option>
                           <option value="farmer">Farmer</option>
@@ -178,7 +178,7 @@ function Register() {
                     </div>
 
                     <div>
-                      <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="password" className="block text-sm font-semibold text-slate-700 mb-2">
                         Password
                       </label>
                       <input
@@ -189,22 +189,22 @@ function Register() {
                         value={formData.password}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300 text-gray-900 placeholder-gray-500"
+                        className="w-full px-4 py-3 premium-input transition-all duration-300 text-gray-900 placeholder-gray-500"
                       />
                     </div>
 
                     {/* Location Section */}
                     <FadeIn delay={0.1}>
-                      <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-200">
+                      <div className="rounded-3xl border border-white/10 bg-white/8 p-6 backdrop-blur-md">
                         <div className="flex items-center mb-4">
-                          <svg className="w-5 h-5 text-emerald-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-emerald-300 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          <h3 className="text-lg font-semibold text-gray-900">Location Setup</h3>
+                          <h3 className="text-lg font-semibold text-white">Location Setup</h3>
                         </div>
 
-                        <p className="text-gray-600 text-sm mb-4">
+                        <p className="text-slate-300 text-sm mb-4">
                           Your location helps us show you nearby farmers and fresh produce.
                         </p>
 
@@ -212,7 +212,7 @@ function Register() {
                           type="button"
                           onClick={handleGetLocation}
                           disabled={isFetchingLocation}
-                          className="w-full mb-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                          className="premium-button w-full mb-4 bg-gradient-to-r from-emerald-400 to-lime-500 px-6 py-3 font-semibold text-slate-950 shadow-[0_20px_40px_rgba(16,185,129,0.26)] disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none"
                         >
                           {isFetchingLocation ? (
                             <div className="flex items-center justify-center">
@@ -236,8 +236,8 @@ function Register() {
                         {locationMessage && (
                           <div className={`p-3 rounded-lg text-sm font-medium ${
                             locationMessage.includes("successfully")
-                              ? "bg-green-50 text-green-700 border border-green-200"
-                              : "bg-red-50 text-red-700 border border-red-200"
+                              ? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20"
+                              : "bg-rose-500/10 text-rose-200 border border-rose-500/20"
                           }`}>
                             {locationMessage}
                           </div>
@@ -257,7 +257,7 @@ function Register() {
                               value={formData.latitude}
                               onChange={handleChange}
                               required
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300"
+                              className="w-full px-3 py-2 text-sm premium-input transition-all duration-300"
                             />
                           </div>
                           <div>
@@ -273,7 +273,7 @@ function Register() {
                               value={formData.longitude}
                               onChange={handleChange}
                               required
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-300"
+                              className="w-full px-3 py-2 text-sm premium-input transition-all duration-300"
                             />
                           </div>
                         </div>
@@ -282,12 +282,12 @@ function Register() {
 
                     {error && (
                       <FadeIn delay={0.1}>
-                        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
                           <div className="flex items-center">
-                            <svg className="w-5 h-5 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-rose-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <p className="text-red-700 font-medium">{error}</p>
+                            <p className="font-medium text-rose-700">{error}</p>
                           </div>
                         </div>
                       </FadeIn>
@@ -296,7 +296,7 @@ function Register() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="premium-button w-full bg-gradient-to-r from-emerald-400 to-lime-500 px-8 py-4 text-lg font-bold text-slate-950 shadow-[0_20px_40px_rgba(16,185,129,0.26)] hover:shadow-[0_24px_48px_rgba(16,185,129,0.32)] disabled:cursor-not-allowed disabled:opacity-50 disabled:transform-none"
                     >
                       {isSubmitting ? (
                         <div className="flex items-center justify-center">
@@ -314,9 +314,9 @@ function Register() {
 
                   <FadeIn delay={0.3}>
                     <div className="mt-8 text-center">
-                      <p className="text-gray-600">
+                      <p className="text-slate-400">
                         Already have an account?{" "}
-                        <Link to="/login" className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors duration-300">
+                        <Link to="/login" className="font-semibold text-emerald-300 transition-colors duration-300 hover:text-emerald-200">
                           Sign in here
                         </Link>
                       </p>

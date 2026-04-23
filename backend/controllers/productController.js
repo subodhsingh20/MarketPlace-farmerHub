@@ -1,5 +1,7 @@
 const { products, users } = require("../data");
 const { hydrateProduct, toFarmerSummary } = require("../data/hydrators");
+const { getIo } = require("../socketInstance");
+const { emitProductCatalogUpdate } = require("../socket");
 
 const toRadians = (degrees) => (degrees * Math.PI) / 180;
 
@@ -69,6 +71,12 @@ const addProduct = async (req, res) => {
       averageRating: 0,
     });
 
+    emitProductCatalogUpdate(getIo(), {
+      action: "created",
+      productId: String(product._id),
+      farmerId: String(product.farmerId),
+    });
+
     return res.status(201).json({
       message: "Product added successfully.",
       product,
@@ -130,6 +138,11 @@ const updateProduct = async (req, res) => {
     }
 
     const updatedProduct = await products.save(nextProduct);
+    emitProductCatalogUpdate(getIo(), {
+      action: "updated",
+      productId: String(updatedProduct._id),
+      farmerId: String(updatedProduct.farmerId),
+    });
 
     return res.status(200).json({
       message: "Product updated successfully.",
@@ -159,6 +172,11 @@ const deleteProduct = async (req, res) => {
     }
 
     await products.deleteById(id);
+    emitProductCatalogUpdate(getIo(), {
+      action: "deleted",
+      productId: String(id),
+      farmerId: String(product.farmerId),
+    });
 
     return res.status(200).json({ message: "Product deleted successfully." });
   } catch (error) {

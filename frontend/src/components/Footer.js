@@ -16,28 +16,28 @@ const supportLinks = [
 
 const footerLinkClass = ({ isActive }) =>
   [
-    "inline-flex rounded-md px-2 py-1 text-sm transition-colors duration-200",
+    "inline-flex rounded-full px-3 py-1.5 text-sm transition-colors duration-200",
     isActive
       ? "bg-white/10 text-white"
-      : "text-gray-400 hover:text-white hover:bg-white/5",
+      : "text-slate-300 hover:text-white hover:bg-white/5",
   ].join(" ");
 
 function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="border-t border-white/10 bg-slate-950 text-white">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <Link to="/" className="inline-flex items-center">
-              <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
+              <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-lime-500 shadow-[0_14px_30px_rgba(16,185,129,0.3)]">
                 <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
               </div>
-              <span className="text-2xl font-bold">Farmer Marketplace</span>
+              <span className="text-2xl font-bold tracking-tight">Farmer Marketplace</span>
             </Link>
 
-            <p className="mb-6 mt-4 max-w-2xl text-gray-400 leading-relaxed">
+            <p className="mb-6 mt-4 max-w-2xl leading-relaxed text-slate-300">
               Connecting farmers and consumers for fresh, local produce while
               supporting sustainable agriculture and fair trade practices.
             </p>
@@ -47,7 +47,7 @@ function Footer() {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 transition-colors hover:text-white"
+                className="text-slate-400 transition-colors hover:text-white"
                 aria-label="Twitter"
               >
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -58,7 +58,7 @@ function Footer() {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 transition-colors hover:text-white"
+                className="text-slate-400 transition-colors hover:text-white"
                 aria-label="Facebook"
               >
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@ function Footer() {
                 href="https://www.linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 transition-colors hover:text-white"
+                className="text-slate-400 transition-colors hover:text-white"
                 aria-label="LinkedIn"
               >
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
@@ -80,7 +80,7 @@ function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 text-lg font-semibold">Quick Links</h3>
+            <h3 className="mb-4 text-lg font-semibold tracking-tight">Quick Links</h3>
             <ul className="space-y-2">
               {primaryLinks.map((link) => (
                 <li key={link.to}>
@@ -93,7 +93,7 @@ function Footer() {
           </div>
 
           <div>
-            <h3 className="mb-4 text-lg font-semibold">Support</h3>
+            <h3 className="mb-4 text-lg font-semibold tracking-tight">Support</h3>
             <ul className="space-y-2">
               {supportLinks.map((link) => (
                 <li key={link.to}>
@@ -106,8 +106,8 @@ function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-gray-800 pt-8 text-center">
-          <p className="text-gray-400">
+        <div className="mt-12 border-t border-white/10 pt-8 text-center">
+          <p className="text-slate-400">
             &copy; 2026 Farmer Marketplace. All rights reserved. Connecting
             farmers and consumers for a sustainable future.
           </p>

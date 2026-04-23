@@ -172,4 +172,15 @@ const emitOrderAlert = (io, payload) => {
   });
 };
 
-module.exports = { initializeSocket, emitOrderAlert };
+const emitProductCatalogUpdate = (io, payload) => {
+  if (!io) {
+    return;
+  }
+
+  io.emit("products_updated", {
+    ...payload,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+module.exports = { initializeSocket, emitOrderAlert, emitProductCatalogUpdate };

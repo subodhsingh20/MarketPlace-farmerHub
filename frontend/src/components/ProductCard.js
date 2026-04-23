@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import ContactOptions from "./ContactOptions";
 import ProductImage from "./ProductImage";
@@ -38,32 +39,41 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
   };
 
   return (
-    <article className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden flex flex-col justify-between h-full transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:-translate-y-1">
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+    <motion.article
+      className="group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-white/70 bg-white/95 shadow-[0_14px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm transition-shadow duration-300 hover:shadow-[0_22px_60px_rgba(15,23,42,0.16)]"
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.35 }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
+    >
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-100 via-white to-emerald-50">
         <ProductImage
           src={product.imageUrl}
           alt={product.name}
           productName={product.name}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           fallbackClassName="w-full h-full object-cover p-6"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" />
         <div className="absolute top-3 right-3">
-          <span className="inline-block px-3 py-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-bold rounded-full shadow-lg">
+          <span className="inline-block rounded-full bg-gradient-to-r from-emerald-500 to-green-600 px-3 py-1 text-xs font-bold text-white shadow-lg">
             {product.category}
           </span>
         </div>
       </div>
 
-      <div className="p-6 flex-grow flex flex-col">
+      <div className="flex flex-grow flex-col p-6">
         <div className="mb-4">
-          <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">
+          <h3 className="mb-2 line-clamp-2 text-xl font-bold leading-tight text-gray-900">
             {product.name}
           </h3>
-          <div className="flex items-center space-x-2 mb-3">
+          <div className="mb-3 flex items-center space-x-2">
             <div className="flex items-center space-x-1">
               {renderStars(product.averageRating || 0)}
             </div>
-            <span className="text-sm text-gray-600 font-medium">
+            <span className="text-sm font-medium text-gray-600">
               ({product.averageRating?.toFixed(1) || 0})
             </span>
           </div>
@@ -75,7 +85,7 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
           </span>
         </div>
 
-        <div className="space-y-2 mb-6 flex-grow">
+        <div className="mb-6 flex-grow space-y-2">
           <div className="flex items-center text-sm text-gray-600">
             <svg className="w-4 h-4 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -145,7 +155,7 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
           ) : (
             <Link
               to="/login"
-              className="block w-full py-3 px-6 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-xl font-bold text-center transition-all duration-300 transform hover:scale-105 hover:shadow-lg shadow-lg"
+              className="block w-full rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 px-6 py-3 text-center font-bold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-emerald-700 hover:to-green-700 hover:shadow-xl"
             >
               <div className="flex items-center justify-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +167,7 @@ const ProductCard = ({ product, isCustomer, getCartQuantity, addToCart }) => {
           )}
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 };
 
