@@ -210,7 +210,7 @@ function Navbar() {
             </NavLink>
 
             {/* Desktop Navigation */}
-            <div className="hidden flex-1 items-center justify-center gap-0.5 px-2 lg:flex xl:gap-1 xl:px-4">
+            <div className="hidden flex-1 items-center justify-end gap-0.5 px-2 lg:ml-auto lg:flex xl:gap-1 xl:px-4">
               {links.map((link) => (
                 <NavLink
                   key={link.to}
