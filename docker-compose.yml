@@ -13,6 +13,8 @@ services:
       - CLOUDANT_DB_PREFIX=${CLOUDANT_DB_PREFIX:-farmer_marketplace}
       - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
       - JWT_SECRET=${JWT_SECRET}
+      - IBM_STT_APIKEY=${IBM_STT_APIKEY}
+      - IBM_STT_URL=${IBM_STT_URL}
       - NODE_ENV=production
     networks:
       - app-network
@@ -25,8 +27,6 @@ services:
         REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:5000/api}
         REACT_APP_SOCKET_URL: ${REACT_APP_SOCKET_URL:-http://localhost:5000}
         REACT_APP_PAYMENT_MODE: ${REACT_APP_PAYMENT_MODE:-test}
-        REACT_APP_RAZORPAY_KEY_ID: ${REACT_APP_RAZORPAY_KEY_ID:-}
-        REACT_APP_PAYMENT_GATEWAY_URL: ${REACT_APP_PAYMENT_GATEWAY_URL:-https://checkout.razorpay.com/v1/checkout.js}
     ports:
       - "3000:80"
     depends_on:

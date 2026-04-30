@@ -9,9 +9,9 @@ services:
       - CLOUDANT_DB_PREFIX=${CLOUDANT_DB_PREFIX:-farmer_marketplace}
       - CLIENT_URL=${CLIENT_URL}
       - JWT_SECRET=${JWT_SECRET}
-      - PAYMENT_MODE=${PAYMENT_MODE:-live}
-      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
-      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - IBM_STT_APIKEY=${IBM_STT_APIKEY}
+      - IBM_STT_URL=${IBM_STT_URL}
+      - PAYMENT_MODE=${PAYMENT_MODE:-test}
       - NODE_ENV=production
     networks:
       - app-network
@@ -20,7 +20,7 @@ services:
   frontend:
     image: subodhsingh20/farmer-marketplace-frontend:latest
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       - backend
     networks:

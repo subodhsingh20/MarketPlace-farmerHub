@@ -195,16 +195,16 @@ function Register() {
 
                     {/* Location Section */}
                     <FadeIn delay={0.1}>
-                      <div className="rounded-3xl border border-white/10 bg-white/8 p-6 backdrop-blur-md">
+                      <div className="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-6 shadow-[0_18px_40px_rgba(16,185,129,0.08)]">
                         <div className="flex items-center mb-4">
-                          <svg className="w-5 h-5 text-emerald-300 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-emerald-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          <h3 className="text-lg font-semibold text-white">Location Setup</h3>
+                          <h3 className="text-lg font-semibold text-slate-950">Location Setup</h3>
                         </div>
 
-                        <p className="text-slate-300 text-sm mb-4">
+                        <p className="text-slate-600 text-sm mb-4">
                           Your location helps us show you nearby farmers and fresh produce.
                         </p>
 
@@ -236,8 +236,8 @@ function Register() {
                         {locationMessage && (
                           <div className={`p-3 rounded-lg text-sm font-medium ${
                             locationMessage.includes("successfully")
-                              ? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/20"
-                              : "bg-rose-500/10 text-rose-200 border border-rose-500/20"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-rose-50 text-rose-700 border border-rose-200"
                           }`}>
                             {locationMessage}
                           </div>
@@ -245,7 +245,7 @@ function Register() {
 
                         <div className="grid grid-cols-2 gap-4 mt-4">
                           <div>
-                            <label htmlFor="latitude" className="block text-xs font-medium text-gray-600 mb-1">
+                            <label htmlFor="latitude" className="block text-xs font-medium text-slate-700 mb-1">
                               Latitude
                             </label>
                             <input
@@ -261,7 +261,7 @@ function Register() {
                             />
                           </div>
                           <div>
-                            <label htmlFor="longitude" className="block text-xs font-medium text-gray-600 mb-1">
+                            <label htmlFor="longitude" className="block text-xs font-medium text-slate-700 mb-1">
                               Longitude
                             </label>
                             <input
@@ -314,9 +314,12 @@ function Register() {
 
                   <FadeIn delay={0.3}>
                     <div className="mt-8 text-center">
-                      <p className="text-slate-400">
+                      <p className="text-slate-500">
                         Already have an account?{" "}
-                        <Link to="/login" className="font-semibold text-emerald-300 transition-colors duration-300 hover:text-emerald-200">
+                        <Link
+                          to="/login"
+                          className="font-semibold text-emerald-700 underline decoration-emerald-300/80 underline-offset-4 transition-colors duration-300 hover:text-emerald-800"
+                        >
                           Sign in here
                         </Link>
                       </p>

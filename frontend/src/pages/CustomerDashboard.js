@@ -155,6 +155,10 @@ function CustomerDashboard() {
 
   const selectedAddress =
     addresses.find((address) => address._id === selectedAddressId) || null;
+  const completedOrders = orders.filter((order) => order.status === "completed").length;
+  const pendingOrders = orders.filter(
+    (order) => !["completed", "cancelled"].includes(order.status)
+  ).length;
 
   const loadRazorpayScript = () =>
     new Promise((resolve) => {
@@ -278,13 +282,33 @@ function CustomerDashboard() {
                 <span className="responsive-chip mb-5 inline-block border border-emerald-400/20 bg-emerald-400/15 text-emerald-100">Customer Dashboard</span>
                 <h1 className="responsive-title mb-5 font-bold !text-white">Welcome back, {user?.name}.</h1>
                 <p className="responsive-copy max-w-2xl !text-slate-300">Review cart activity, track live order updates, and move through checkout with a cleaner purchase flow.</p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 backdrop-blur-md">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200">Cart</p>
+                    <p className="mt-2 text-2xl font-bold text-white">{cartItems.length}</p>
+                    <p className="text-sm text-slate-300">Products ready to checkout</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 backdrop-blur-md">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-200">Orders</p>
+                    <p className="mt-2 text-2xl font-bold text-white">{orders.length}</p>
+                    <p className="text-sm text-slate-300">{pendingOrders} active, {completedOrders} completed</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 backdrop-blur-md">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">Addresses</p>
+                    <p className="mt-2 text-2xl font-bold text-white">{addresses.length}</p>
+                    <p className="text-sm text-slate-300">Saved for faster checkout</p>
+                  </div>
+                </div>
               </div>
               <div className="rounded-[1.75rem] border border-emerald-400/20 bg-gradient-to-br from-emerald-500 to-green-600 p-6 text-white shadow-[0_20px_60px_rgba(16,185,129,0.28)]">
-                <h3 className="mb-6 text-lg font-semibold">Quick Summary</h3>
+                <h3 className="mb-6 text-lg font-semibold">Checkout Snapshot</h3>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between"><span className="text-emerald-100">Cart Items</span><span className="text-2xl font-bold">{cartItems.length}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-emerald-100">Total Value</span><span className="text-2xl font-bold">{formatCurrency(cartTotal)}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-emerald-100">Orders</span><span className="text-2xl font-bold">{orders.length}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-emerald-100">Current Total</span><span className="text-2xl font-bold">{formatCurrency(cartTotal)}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-emerald-100">Payment Mode</span><span className="text-lg font-semibold">{PAYMENT_MODE === "test" ? "Test" : "Live"}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-emerald-100">Selected Address</span><span className="text-lg font-semibold">{selectedAddress ? "Ready" : "Needed"}</span></div>
+                  <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-emerald-50/90">
+                    Orders stay synced here while your cart, checkout, and saved addresses stay in one flow.
+                  </div>
                 </div>
               </div>
             </div>
@@ -300,13 +324,13 @@ function CustomerDashboard() {
                 {cartItems.length === 0 ? (
                   <div className="py-12 text-center"><h3 className="text-lg font-semibold text-white">Your cart is empty</h3><p className="text-slate-300">Visit the products page to add fresh produce.</p></div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     {cartItems.map((item) => (
-                      <div key={item._id} className="rounded-2xl border border-white/10 bg-white/6 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.16)] backdrop-blur-md">
+                      <div key={item._id} className="rounded-[1.6rem] border border-white/10 bg-white/6 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.16)] backdrop-blur-md transition duration-300 hover:-translate-y-0.5 hover:border-emerald-300/20 sm:p-5">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-                          <img src={item.imageUrl} alt={item.name} className="h-48 w-full rounded-lg object-cover md:h-24 md:w-24" />
+                          <img src={item.imageUrl} alt={item.name} className="h-40 w-full rounded-2xl object-cover md:h-24 md:w-24" />
                           <div className="flex-1">
-                            <div className="mb-4 flex flex-col md:flex-row md:items-start md:justify-between">
+                            <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                               <div>
                                 <h3 className="text-lg font-semibold text-white">{item.name}</h3>
                                 <p className="text-sm text-slate-300">{item.category}</p>
@@ -317,12 +341,12 @@ function CustomerDashboard() {
                               </p>
                             </div>
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="flex items-center gap-4">
+                              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                                 <label className="text-sm font-medium text-slate-200">Quantity:</label>
                                 <div className="flex items-center rounded-2xl border border-white/10 bg-slate-950/40 shadow-sm">
-                                  <button type="button" className="px-3 py-2" onClick={() => decreaseCartQuantity(item._id)}>-</button>
-                                  <input type="number" min="1" max={item.quantity} value={item.quantityInCart} onChange={(event) => updateCartQuantity(item._id, Number(event.target.value))} className="w-20 border-0 bg-transparent px-3 py-2 text-center text-slate-100 focus:ring-0" />
-                                  <button type="button" className="px-3 py-2" onClick={() => increaseCartQuantity(item._id)} disabled={item.quantityInCart >= item.quantity}>+</button>
+                                  <button type="button" className="px-3 py-2 text-slate-200" onClick={() => decreaseCartQuantity(item._id)}>-</button>
+                                  <input type="number" min="1" max={item.quantity} value={item.quantityInCart} onChange={(event) => updateCartQuantity(item._id, Number(event.target.value))} className="w-16 border-0 bg-transparent px-2 py-2 text-center text-slate-100 focus:ring-0" />
+                                  <button type="button" className="px-3 py-2 text-slate-200" onClick={() => increaseCartQuantity(item._id)} disabled={item.quantityInCart >= item.quantity}>+</button>
                                 </div>
                                 <span className="text-sm text-slate-300">
                                   {formatQuantityWithUnit(item.quantityInCart, item)}
@@ -355,10 +379,10 @@ function CustomerDashboard() {
                 successMessage={addressMessage}
               />
 
-              <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/72 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.28)] backdrop-blur-xl" id="cart-summary">
-                <h2 className="mb-6 text-2xl font-bold !text-white">Cart Summary</h2>
-                <div className="space-y-6">
-                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+              <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/72 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.28)] backdrop-blur-xl sm:p-6" id="cart-summary">
+                <h2 className="mb-5 text-2xl font-bold !text-white">Cart Summary</h2>
+                <div className="space-y-5">
+                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3.5 sm:p-4">
                     <p className="text-sm font-semibold text-emerald-100">Selected Address</p>
                     {selectedAddress ? (
                       <div className="mt-2 text-sm leading-6 text-slate-200">
@@ -368,26 +392,28 @@ function CustomerDashboard() {
                     ) : <p className="mt-2 text-sm text-emerald-100">Add or choose an address to continue.</p>}
                   </div>
 
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-200">Fulfillment Type</label>
-                    <select value={fulfillmentType} onChange={(event) => setFulfillmentType(event.target.value)} className="w-full premium-input px-4 py-3 text-slate-100">
-                      <option value="delivery">Delivery</option>
-                      <option value="pickup">Pickup</option>
-                    </select>
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-200">Fulfillment Type</label>
+                      <select value={fulfillmentType} onChange={(event) => setFulfillmentType(event.target.value)} className="w-full premium-input px-4 py-2.5 text-slate-900">
+                        <option value="delivery">Delivery</option>
+                        <option value="pickup">Pickup</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-200">Payment Method</label>
+                      <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="w-full premium-input px-4 py-2.5 text-slate-900">
+                        <option value="online">{PAYMENT_MODE === "test" ? "Online payment (test mode)" : "Online payment"}</option>
+                        <option value="cod">Cash on Delivery</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-200">Payment Method</label>
-                    <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)} className="w-full premium-input px-4 py-3 text-slate-100">
-                      <option value="online">{PAYMENT_MODE === "test" ? "Online payment (test mode)" : "Online payment"}</option>
-                      <option value="cod">Cash on Delivery</option>
-                    </select>
-                  </div>
+                  {checkoutError && <div className="rounded-xl border border-rose-400/20 bg-rose-500/10 p-3.5 text-sm font-medium text-rose-100">{checkoutError}</div>}
+                  {checkoutMessage && <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3.5 text-sm font-medium text-emerald-100">{checkoutMessage}</div>}
 
-                  {checkoutError && <div className="rounded-xl border border-rose-400/20 bg-rose-500/10 p-4 text-sm font-medium text-rose-100">{checkoutError}</div>}
-                  {checkoutMessage && <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-100">{checkoutMessage}</div>}
-
-                  <button type="button" className="premium-button w-full bg-gradient-to-r from-emerald-400 to-lime-500 px-8 py-4 text-lg font-bold text-slate-950 shadow-[0_20px_40px_rgba(16,185,129,0.26)] disabled:cursor-not-allowed disabled:opacity-50" onClick={handleCheckout} disabled={isProcessingPayment || cartItems.length === 0}>
+                  <button type="button" className="premium-button w-full bg-gradient-to-r from-emerald-400 to-lime-500 px-6 py-3.5 text-base font-bold text-slate-950 shadow-[0_20px_40px_rgba(16,185,129,0.26)] disabled:cursor-not-allowed disabled:opacity-50" onClick={handleCheckout} disabled={isProcessingPayment || cartItems.length === 0}>
                     {isProcessingPayment
                       ? "Processing Payment..."
                       : paymentMethod === "cod"
@@ -397,19 +423,19 @@ function CustomerDashboard() {
                           : "Pay with Razorpay"}
                   </button>
 
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="rounded-xl border border-sky-400/20 bg-sky-500/10 p-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-sky-400/20 bg-sky-500/10 p-3.5">
                       <p className="text-sm font-medium text-sky-100">Total Products</p>
-                      <p className="text-2xl font-bold text-white">{cartItems.length}</p>
+                      <p className="text-xl font-bold text-white sm:text-2xl">{cartItems.length}</p>
                     </div>
-                    <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                    <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3.5">
                       <p className="text-sm font-medium text-emerald-100">Total Amount</p>
-                      <p className="text-2xl font-bold text-white">{formatCurrency(cartTotal)}</p>
+                      <p className="text-xl font-bold text-white sm:text-2xl">{formatCurrency(cartTotal)}</p>
                     </div>
-                    <div className="rounded-xl border border-violet-400/20 bg-violet-500/10 p-4">
+                    <div className="rounded-xl border border-violet-400/20 bg-violet-500/10 p-3.5">
                       <p className="text-sm font-medium text-violet-100">Status</p>
-                      <p className="text-2xl font-bold text-white">{cartItems.length ? "Ready" : "Idle"}</p>
-                      <p className="mt-2 text-xs text-violet-100/80">
+                      <p className="text-xl font-bold text-white sm:text-2xl">{cartItems.length ? "Ready" : "Idle"}</p>
+                      <p className="mt-1.5 text-xs leading-5 text-violet-100/80">
                         {paymentMethod === "cod"
                           ? "Pay at delivery"
                           : PAYMENT_MODE === "test"

@@ -542,14 +542,14 @@ function Chat() {
       <div className="page__header">
         <div className="page__header-copy max-w-3xl gap-3">
           <span className="page__eyebrow !text-emerald-300">Chat</span>
-          <h1 className="max-w-[14ch] !text-white">
+          <h1 className="max-w-[17ch] text-4xl font-bold leading-[0.95] tracking-tight !text-white sm:text-[3.4rem] lg:text-[3.9rem] xl:text-[4.2rem]">
             {otherUserId
               ? `Chat with ${otherUserName}`
               : currentUserRole === "farmer"
                 ? "Farmer messages"
                 : "Customer inbox"}
           </h1>
-          <p className="!text-slate-300">
+          <p className="!text-slate-300" style={{ color: "#e4f0ea" }}>
             {currentUserRole === "farmer"
               ? "Manage farmer conversations in one place with fast replies and real-time updates."
               : "Manage customer conversations in one place with fast replies and real-time updates."}
@@ -563,18 +563,18 @@ function Chat() {
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[16rem_minmax(0,1fr)]">
+      <div className="grid gap-4 xl:grid-cols-[14.5rem_minmax(0,1fr)] 2xl:grid-cols-[15.5rem_minmax(0,1fr)]">
         <aside className="rounded-[1.75rem] border border-white/10 bg-slate-950/72 overflow-hidden p-0 shadow-[0_20px_50px_rgba(15,23,42,0.28)] backdrop-blur-xl">
-          <div className="border-b border-white/10 bg-gradient-to-r from-emerald-500/10 via-white/5 to-lime-500/10 px-4 py-3.5">
+          <div className="border-b border-white/10 bg-gradient-to-r from-emerald-500/16 via-white/8 to-lime-500/16 px-4 py-3">
             <h2 className="text-base font-bold text-white sm:text-lg">Inbox</h2>
-            <p className="text-sm text-slate-300">
+            <p className="text-xs text-slate-200/90 sm:text-sm" style={{ color: "#d7ece2" }}>
               {isLoadingConversations
                 ? "Loading conversations..."
                 : `${conversations.length} active chat${conversations.length === 1 ? "" : "s"}`}
             </p>
           </div>
 
-          <div className="max-h-[31rem] overflow-y-auto p-3">
+          <div className="max-h-[28rem] overflow-y-auto p-3 xl:max-h-[30rem]">
             {isLoadingConversations ? (
               <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-6 text-center text-sm text-slate-300 backdrop-blur-md">
                 Loading inbox...
@@ -599,8 +599,8 @@ function Chat() {
                       )}`}
                       className={`block rounded-2xl border px-3.5 py-3 transition duration-300 ${
                         isActive
-                          ? "border-emerald-400/20 bg-emerald-500/10 shadow-sm"
-                          : "border-white/10 bg-white/6 hover:-translate-y-0.5 hover:border-emerald-300/20 hover:bg-white/10 hover:shadow-md"
+                          ? "border-emerald-300/30 bg-gradient-to-r from-emerald-500/18 to-green-500/12 shadow-[0_12px_30px_rgba(16,185,129,0.12)]"
+                          : "border-white/10 bg-slate-900/55 hover:-translate-y-0.5 hover:border-emerald-300/20 hover:bg-slate-900/72 hover:shadow-md"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -615,14 +615,14 @@ function Chat() {
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 text-[11px] capitalize tracking-[0.12em] text-emerald-200">
+                          <p className="mt-1 text-[11px] capitalize tracking-[0.12em] text-emerald-200" style={{ color: "#c7f7dd" }}>
                             {conversation.role || "user"}
                           </p>
-                          <p className="mt-2 line-clamp-2 text-sm text-slate-300">
+                          <p className="mt-2 line-clamp-2 text-sm text-slate-200/90" style={{ color: "#e2efe9" }}>
                             {getConversationPreview(conversation)}
                           </p>
                         </div>
-                        <span className="shrink-0 text-[11px] text-slate-400">
+                        <span className="shrink-0 text-[11px] text-slate-300/80" style={{ color: "#d5e3dd" }}>
                           {formatConversationTime(conversation.timestamp)}
                         </span>
                       </div>

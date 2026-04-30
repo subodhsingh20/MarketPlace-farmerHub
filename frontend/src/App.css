@@ -441,6 +441,14 @@ aside {
   position: relative;
 }
 
+.page--chat {
+  padding: 0.95rem;
+}
+
+.page--chat .page__header-copy {
+  gap: 0.7rem;
+}
+
 .page--marketplace .page__header-copy h1 {
   max-width: 15ch;
 }

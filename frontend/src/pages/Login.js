@@ -124,10 +124,13 @@ function Login() {
 
                   <FadeIn delay={0.3}>
                     <div className="mt-8 text-center">
-                      <p className="text-slate-400">
+                      <p className="text-slate-500">
                         Don't have an account?{" "}
-                        <Link to="/register" className="font-semibold text-emerald-300 transition-colors duration-300 hover:text-emerald-200">
-                          Create one here
+                        <Link
+                          to="/register"
+                          className="font-semibold text-emerald-700 underline decoration-emerald-300/80 underline-offset-4 transition-colors duration-300 hover:text-emerald-800"
+                        >
+r                          Create one here
                         </Link>
                       </p>
                     </div>

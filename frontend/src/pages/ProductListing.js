@@ -993,10 +993,10 @@ function ProductListing() {
                         <button
                           type="button"
                           onClick={startVoiceSearch}
-                          className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                          className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-white ${
                             isVoiceListening
-                              ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-100 shadow-sm"
-                              : "border-white/10 bg-white/5 text-slate-300 hover:border-emerald-300/20 hover:bg-emerald-500/10 hover:text-emerald-100"
+                              ? "border-emerald-300/50 bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-[0_10px_24px_rgba(16,185,129,0.28)]"
+                              : "border-slate-200 bg-slate-900 text-emerald-100 shadow-[0_8px_20px_rgba(15,23,42,0.16)] hover:border-emerald-300/40 hover:bg-emerald-600 hover:text-white"
                           }`}
                           aria-pressed={isVoiceListening}
                           aria-label={isVoiceListening ? "Stop voice search" : "Start voice search"}
@@ -1006,7 +1006,7 @@ function ProductListing() {
                             <span className="absolute inset-0 rounded-full bg-emerald-400/20 animate-ping" />
                           )}
                           <svg
-                            className={`relative h-5 w-5 ${isVoiceListening ? "animate-pulse" : ""}`}
+                            className={`relative h-5 w-5 stroke-[2.2] ${isVoiceListening ? "animate-pulse" : ""}`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1039,15 +1039,15 @@ function ProductListing() {
                               setSearchTerm("");
                               setVoiceStatus("");
                             }}
-                            className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                            className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white ${
                               isVoiceListening
-                                ? "border-rose-300/20 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20 focus:ring-rose-500"
-                                : "border-white/10 bg-white/5 text-slate-300 hover:border-slate-200/20 hover:bg-white/10 hover:text-slate-100 focus:ring-emerald-500"
+                                ? "border-rose-300/50 bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-[0_10px_24px_rgba(244,63,94,0.24)] hover:from-rose-600 hover:to-red-700 focus:ring-rose-500"
+                                : "border-slate-200 bg-white text-slate-500 shadow-[0_8px_20px_rgba(148,163,184,0.16)] hover:border-slate-300 hover:bg-slate-100 hover:text-slate-700 focus:ring-emerald-500"
                             }`}
                             aria-label={isVoiceListening ? "Stop voice search and clear" : "Clear search"}
                             title={isVoiceListening ? "Stop voice search and clear" : "Clear search"}
                           >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-5 w-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               {isVoiceListening ? (
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h6v6H9z" />
                               ) : (

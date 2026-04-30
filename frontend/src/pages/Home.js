@@ -82,6 +82,36 @@ const fallbackFeaturedProducts = [
   },
 ];
 
+const quickAccessHighlights = [
+  {
+    title: "Fast Filter",
+    description: "Jump straight into the aisle you need instead of browsing every listing.",
+    cardClassName:
+      "border-emerald-300/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.2),rgba(15,23,42,0.3))] shadow-[0_20px_45px_rgba(5,150,105,0.12)]",
+    badgeClassName: "bg-emerald-400/16 text-emerald-100 ring-1 ring-emerald-200/20",
+    titleClassName: "text-emerald-200",
+    glowClassName: "bg-emerald-300/20",
+  },
+  {
+    title: "Fresh Supply",
+    description: "Seasonal produce and pantry staples stay clearly grouped for faster comparison.",
+    cardClassName:
+      "border-amber-300/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.22),rgba(30,41,59,0.28))] shadow-[0_20px_45px_rgba(245,158,11,0.12)]",
+    badgeClassName: "bg-amber-300/16 text-amber-100 ring-1 ring-amber-200/20",
+    titleClassName: "text-amber-100",
+    glowClassName: "bg-amber-300/20",
+  },
+  {
+    title: "Direct Access",
+    description: "Open a category and connect with nearby farmers without extra clicks.",
+    cardClassName:
+      "border-sky-300/20 bg-[linear-gradient(135deg,rgba(14,165,233,0.22),rgba(15,23,42,0.3))] shadow-[0_20px_45px_rgba(14,165,233,0.12)]",
+    badgeClassName: "bg-sky-300/16 text-sky-100 ring-1 ring-sky-200/20",
+    titleClassName: "text-sky-100",
+    glowClassName: "bg-sky-300/20",
+  },
+];
+
 function Home() {
   const { user } = useAuth();
   const { addToCart, cartItems } = useCart();
@@ -393,24 +423,26 @@ function Home() {
             </div>
 
             <FadeIn delay={0.35}>
-              <div className="mt-8 grid gap-4 rounded-[2rem] border border-emerald-100 bg-white/90 p-5 shadow-[0_18px_50px_rgba(16,24,40,0.06)] sm:grid-cols-3 sm:p-6">
-                <div className="rounded-2xl bg-emerald-50 px-4 py-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">Fast Filter</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Jump straight into the aisle you need instead of browsing every listing.
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-amber-50 px-4 py-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-amber-700">Fresh Supply</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Seasonal produce and pantry staples stay clearly grouped for faster comparison.
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-sky-50 px-4 py-4">
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-sky-700">Direct Access</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Open a category and connect with nearby farmers without extra clicks.
-                  </p>
+              <div className="relative mt-8 overflow-hidden rounded-[2.25rem] border border-white/12 bg-white/8 p-3 shadow-[0_24px_70px_rgba(8,15,28,0.28)] backdrop-blur-xl sm:p-4">
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.04))]" />
+                <div className="relative grid gap-3 sm:grid-cols-3">
+                  {quickAccessHighlights.map((item) => (
+                    <div
+                      key={item.title}
+                      className={`relative overflow-hidden rounded-[1.7rem] border px-5 py-5 backdrop-blur-md sm:px-6 sm:py-6 ${item.cardClassName}`}
+                    >
+                      <div className={`absolute -right-10 -top-10 h-28 w-28 rounded-full blur-3xl ${item.glowClassName}`} />
+                      <div className="relative">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] ${item.badgeClassName}`}>
+                          Quick View
+                        </span>
+                        <p className={`mt-4 text-sm font-semibold uppercase tracking-[0.16em] ${item.titleClassName}`}>{item.title}</p>
+                        <p className="mt-2 max-w-xs text-sm leading-6 text-slate-200/85 sm:text-[0.95rem]">
+                          {item.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </FadeIn>
@@ -481,17 +513,21 @@ function Home() {
               </div>
             </div>
           </section>
-        </FadeIn>
+      </FadeIn>
 
       <FadeIn>
-        <section className="py-16 lg:py-24 xl:py-32 bg-gradient-to-b from-gray-50 to-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
+        <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 py-16 lg:py-24 xl:py-32">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.16),transparent_24%),radial-gradient(circle_at_80%_18%,rgba(245,158,11,0.14),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0))]" />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
             <FadeIn delay={0.1}>
-              <div className="text-center mb-12 lg:mb-20">
-                <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl lg:mb-6">
-            Nearby Farmers Preview
-          </h2>
-                <p className="mx-auto max-w-3xl text-lg leading-relaxed text-slate-300 sm:text-xl lg:text-2xl xl:text-3xl">
+              <div className="mb-12 rounded-[2rem] border border-white/10 bg-white/7 px-6 py-8 text-center shadow-[0_24px_70px_rgba(8,15,28,0.24)] backdrop-blur-xl lg:mb-20 lg:px-10 lg:py-10">
+                <span className="inline-flex rounded-full bg-emerald-400/12 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100 ring-1 ring-emerald-200/20">
+                  Marketplace picks
+                </span>
+                <h2 className="mb-4 mt-5 text-3xl font-bold text-white sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl lg:mb-6">
+                  Nearby Farmers Preview
+                </h2>
+                <p className="mx-auto max-w-3xl text-lg leading-relaxed text-slate-200/90 sm:text-xl lg:text-2xl xl:text-3xl">
                   Handpicked fresh produce from our most trusted farmers
                 </p>
               </div>
