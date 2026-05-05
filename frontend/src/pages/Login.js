@@ -130,7 +130,7 @@ function Login() {
                           to="/register"
                           className="font-semibold text-emerald-700 underline decoration-emerald-300/80 underline-offset-4 transition-colors duration-300 hover:text-emerald-800"
                         >
-rr                          Create one here
+                          Create one here
                         </Link>
                       </p>
                     </div>

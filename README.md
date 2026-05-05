@@ -7,7 +7,7 @@ Farmer Marketplace is a full-stack marketplace for connecting customers with nea
 - Frontend: React 19, React Router, Axios, Socket.IO client, Framer Motion, Leaflet
 - Backend: Node.js, Express 5, Socket.IO, JWT, bcryptjs
 - Database: IBM Cloudant
-- Payments: Razorpay in live mode, mock/test mode for development
+- Payments: Test mode
 - Deployment: AWS Amplify for frontend, Render for backend, GitHub Actions and Docker Hub for container builds
 
 ## Features
@@ -17,7 +17,6 @@ Farmer Marketplace is a full-stack marketplace for connecting customers with nea
 - Customer dashboard for shopping, cart, checkout, addresses, and order tracking
 - Real-time socket updates
 - Cloudant-backed persistence for users, products, orders, and chat messages
-- Razorpay payment flow with test and live support
 - Customer voice search for products using IBM Speech to Text
 
 ## Repository Structure
