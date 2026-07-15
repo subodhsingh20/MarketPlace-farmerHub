@@ -3,6 +3,7 @@ const DEFAULT_CLIENT_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1",
   "http://127.0.0.1:3000",
+  "https://market-place-farmer-hub.vercel.app",
 ];
 
 const CLIENT_ORIGIN_ENV_KEYS = [

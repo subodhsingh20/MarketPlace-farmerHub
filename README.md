@@ -2,7 +2,7 @@
 
 A full-stack marketplace that connects customers directly with nearby farmers. Farmers can manage products, track orders, chat with customers, and view sales analytics, while customers can browse nearby produce, place orders, and communicate in real time.
 
-**Live Demo:** [farmer-marketplace.amplifyapp.com](https://main.d2rlq4a76ba9ai.amplifyapp.com)
+**Live Demo:** [market-place-farmer-hub.vercel.app](https://market-place-farmer-hub.vercel.app)
 
 ## Table Of Contents
 
@@ -21,7 +21,7 @@ A full-stack marketplace that connects customers directly with nearby farmers. F
 
 Farmer Marketplace bridges local farmers and customers with product discovery, real-time chat, checkout, order tracking, ratings, and farmer dashboards.
 
-The platform is deployed on AWS Amplify for the frontend and Render for the backend, with IBM Cloudant as the cloud database and a GitHub Actions plus Docker Hub pipeline for container builds.
+The platform is deployed on Vercel for the frontend and Render for the backend, with IBM Cloudant as the cloud database and a GitHub Actions plus Docker Hub pipeline for container builds.
 
 ## Features
 
@@ -58,7 +58,7 @@ The platform is deployed on AWS Amplify for the frontend and Render for the back
 | Voice Search | IBM Speech to Text |
 | Containerization | Docker, Docker Compose |
 | CI/CD | GitHub Actions, Docker Hub |
-| Deployment | AWS Amplify, Render |
+| Deployment | Vercel, Render |
 
 ## Repository Structure
 
@@ -156,7 +156,7 @@ CLOUDANT_URL=https://YOUR-ACCOUNT.cloudantnosqldb.appdomain.cloud
 CLOUDANT_APIKEY=YOUR_CLOUDANT_API_KEY
 CLOUDANT_DB_NAME=farmer_marketplace
 JWT_SECRET=YOUR_STRONG_RANDOM_SECRET
-CLIENT_URL=http://localhost:3000,https://your-app.amplifyapp.com
+CLIENT_URL=http://localhost:3000,https://market-place-farmer-hub.vercel.app
 PAYMENT_MODE=test
 IBM_STT_APIKEY=YOUR_IBM_STT_API_KEY
 IBM_STT_URL=https://api.au-syd.speech-to-text.watson.cloud.ibm.com/instances/YOUR_INSTANCE_ID
@@ -175,7 +175,7 @@ The backend still accepts the older `CLOUDANT_API_KEY` and `CLOUDANT_DB_PREFIX` 
 | `REACT_APP_RAZORPAY_KEY_ID` | Razorpay frontend key ID, if live payments are enabled |
 | `REACT_APP_PAYMENT_GATEWAY_URL` | Razorpay checkout script URL |
 
-Example for AWS Amplify:
+Example for Vercel:
 
 ```env
 REACT_APP_API_URL=https://your-backend.onrender.com/api
@@ -214,7 +214,7 @@ The app uses these logical document groups:
 
 | Layer | Platform |
 |---|---|
-| Frontend | AWS Amplify |
+| Frontend | Vercel |
 | Backend | Render |
 | Database | IBM Cloudant |
 
