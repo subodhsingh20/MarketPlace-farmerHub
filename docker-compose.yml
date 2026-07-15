@@ -1,20 +1,13 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env
     ports:
       - "5000:5000"
     environment:
-      - CLOUDANT_URL=${CLOUDANT_URL}
-      - CLOUDANT_APIKEY=${CLOUDANT_APIKEY}
-      - CLOUDANT_DB_NAME=${CLOUDANT_DB_NAME:-farmer_marketplace}
-      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
-      - JWT_SECRET=${JWT_SECRET}
-      - IBM_STT_APIKEY=${IBM_STT_APIKEY}
-      - IBM_STT_URL=${IBM_STT_URL}
       - NODE_ENV=production
     networks:
       - app-network

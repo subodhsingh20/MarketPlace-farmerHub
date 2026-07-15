@@ -2,6 +2,13 @@ const { randomUUID } = require("crypto");
 const { isDeepStrictEqual } = require("node:util");
 
 const DEFAULT_DB_PREFIX = "farmer_marketplace";
+const DEFAULT_IAM_TOKEN_URL = "https://iam.cloud.ibm.com/identity/token";
+const TOKEN_EXPIRY_BUFFER_MS = 60 * 1000;
+
+let iamTokenCache = {
+  token: "",
+  expiresAt: 0,
+};
 
 const getConfiguredDatabaseName = () =>
   (process.env.CLOUDANT_DB_NAME || process.env.CLOUDANT_DATABASE || "").trim();
@@ -34,6 +41,57 @@ const getCloudantApiKey = () =>
   process.env.CLOUDANT_IAM_API_KEY ||
   "";
 
+const getIamAccessToken = async () => {
+  const apiKey = getCloudantApiKey();
+
+  if (!apiKey) {
+    return "";
+  }
+
+  const now = Date.now();
+
+  if (iamTokenCache.token && iamTokenCache.expiresAt - TOKEN_EXPIRY_BUFFER_MS > now) {
+    return iamTokenCache.token;
+  }
+
+  const body = new URLSearchParams({
+    grant_type: "urn:ibm:params:oauth:grant-type:apikey",
+    apikey: apiKey,
+  });
+
+  const response = await fetch(process.env.IBM_IAM_TOKEN_URL || DEFAULT_IAM_TOKEN_URL, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
+  const text = await response.text();
+  let payload = {};
+
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch (_error) {
+      payload = { raw: text };
+    }
+  }
+
+  if (!response.ok || !payload.access_token) {
+    const message = payload?.errorMessage || payload?.error || response.statusText || "IAM token request failed.";
+    throw new Error(`IBM IAM token request failed: ${message}`);
+  }
+
+  iamTokenCache = {
+    token: payload.access_token,
+    expiresAt: Number(payload.expiration ? payload.expiration * 1000 : now + (payload.expires_in || 3600) * 1000),
+  };
+
+  return iamTokenCache.token;
+};
+
 const getDatabaseName = (entity) => {
   const databaseName = getConfiguredDatabaseName();
 
@@ -44,7 +102,7 @@ const getDatabaseName = (entity) => {
   return `${getDatabasePrefix()}_${entity}`;
 };
 
-const getAuthHeaders = () => {
+const getAuthHeaders = async () => {
   const baseUrl =
     process.env.CLOUDANT_URL ||
     process.env.IBM_CLOUDANT_URL ||
@@ -53,23 +111,26 @@ const getAuthHeaders = () => {
   const apiKey = getCloudantApiKey();
   const parsed = baseUrl ? new URL(baseUrl) : null;
 
+  if (apiKey) {
+    const token = await getIamAccessToken();
+
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  }
+
   if (parsed && parsed.username && parsed.password) {
     return {
       Authorization: `Basic ${Buffer.from(`${parsed.username}:${parsed.password}`).toString("base64")}`,
     };
   }
 
-  if (!apiKey) {
-    return {};
-  }
-
-  return {
-    Authorization: `Basic ${Buffer.from(`apikey:${apiKey}`).toString("base64")}`,
-  };
+  return {};
 };
 
 const requestJson = async (path, { method = "GET", body, headers = {} } = {}) => {
   const baseUrl = getCloudantBaseUrl();
+  const authHeaders = await getAuthHeaders();
 
   let response;
 
@@ -79,7 +140,7 @@ const requestJson = async (path, { method = "GET", body, headers = {} } = {}) =>
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        ...getAuthHeaders(),
+        ...authHeaders,
         ...headers,
       },
       body: body === undefined ? undefined : JSON.stringify(body),
