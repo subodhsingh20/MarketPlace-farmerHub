@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
+import { getSocketBaseUrl } from "../config/backendUrls";
 
 const SocketContext = createContext(null);
 const defaultSocketUrl =
@@ -24,7 +25,7 @@ export function SocketProvider({ children }) {
     }
 
     const nextSocket = io(
-      process.env.REACT_APP_SOCKET_URL || defaultSocketUrl,
+      getSocketBaseUrl(process.env.REACT_APP_SOCKET_URL, defaultSocketUrl),
       {
         auth: { token },
       }

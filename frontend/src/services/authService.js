@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getApiBaseUrl } from "../config/backendUrls";
 
 const defaultApiBaseUrl =
   typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)
@@ -11,7 +12,7 @@ if (!process.env.REACT_APP_API_URL && !defaultApiBaseUrl) {
 }
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || defaultApiBaseUrl,
+  baseURL: getApiBaseUrl(process.env.REACT_APP_API_URL, defaultApiBaseUrl),
 });
 
 const storedToken =

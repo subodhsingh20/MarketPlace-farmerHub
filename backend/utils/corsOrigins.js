@@ -4,6 +4,7 @@ const DEFAULT_CLIENT_ORIGINS = [
   "http://127.0.0.1",
   "http://127.0.0.1:3000",
   "https://market-place-farmer-hub.vercel.app",
+  "https://main.d2rlq4a76ba9ai.amplifyapp.com",
 ];
 
 const CLIENT_ORIGIN_ENV_KEYS = [
