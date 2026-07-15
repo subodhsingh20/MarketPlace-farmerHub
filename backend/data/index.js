@@ -8,7 +8,7 @@ const chatMessages = new CloudantRepository("chatMessages", {
 });
 
 const initializeCloudant = async () => {
-  const databases = [users.dbName, products.dbName, orders.dbName, chatMessages.dbName];
+  const databases = [...new Set([users.dbName, products.dbName, orders.dbName, chatMessages.dbName])];
 
   for (const dbName of databases) {
     await ensureDatabase(dbName);

@@ -1,7 +1,12 @@
 const { randomUUID } = require("crypto");
 const { isDeepStrictEqual } = require("node:util");
 
-const DEFAULT_DB_PREFIX = process.env.CLOUDANT_DB_PREFIX || "farmer_marketplace";
+const DEFAULT_DB_PREFIX = "farmer_marketplace";
+
+const getConfiguredDatabaseName = () =>
+  (process.env.CLOUDANT_DB_NAME || process.env.CLOUDANT_DATABASE || "").trim();
+
+const getDatabasePrefix = () => (process.env.CLOUDANT_DB_PREFIX || DEFAULT_DB_PREFIX).trim();
 
 const getCloudantBaseUrl = () => {
   const baseUrl =
@@ -23,12 +28,21 @@ const getCloudantBaseUrl = () => {
 };
 
 const getCloudantApiKey = () =>
+  process.env.CLOUDANT_APIKEY ||
   process.env.CLOUDANT_API_KEY ||
   process.env.IBM_CLOUDANT_APIKEY ||
   process.env.CLOUDANT_IAM_API_KEY ||
   "";
 
-const getDatabaseName = (entity) => `${DEFAULT_DB_PREFIX}_${entity}`;
+const getDatabaseName = (entity) => {
+  const databaseName = getConfiguredDatabaseName();
+
+  if (databaseName) {
+    return databaseName;
+  }
+
+  return `${getDatabasePrefix()}_${entity}`;
+};
 
 const getAuthHeaders = () => {
   const baseUrl =
@@ -482,9 +496,12 @@ module.exports = {
   CloudantRepository,
   createTimestampedDoc,
   ensureDatabase,
+  getDoc,
   getCloudantApiKey,
   getCloudantBaseUrl,
   getDatabaseName,
   matchesSelector,
+  putDoc,
+  requestJson,
   sortDocs,
 };

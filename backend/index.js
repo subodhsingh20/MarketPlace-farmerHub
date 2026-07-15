@@ -3,6 +3,10 @@ const http = require("http");
 const cors = require("cors");
 const path = require("path");
 const dotenv = require("dotenv");
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config({ path: path.resolve(__dirname, ".env"), override: true });
+
 const authRoutes = require("./routes/authRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
@@ -22,9 +26,6 @@ const {
   isAllowedOrigin,
 } = require("./utils/corsOrigins");
 const { initializeCloudant } = require("./data");
-
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
-dotenv.config({ path: path.resolve(__dirname, ".env"), override: true });
 
 const app = express();
 const server = http.createServer(app);
@@ -108,8 +109,12 @@ const startServer = async () => {
       console.warn("CLOUDANT_URL is not set. Set the Cloudant service URL before starting.");
     }
 
-    if (!process.env.CLOUDANT_API_KEY) {
-      console.warn("CLOUDANT_API_KEY is not set. Set the Cloudant API key before starting.");
+    if (!process.env.CLOUDANT_APIKEY && !process.env.CLOUDANT_API_KEY) {
+      console.warn("CLOUDANT_APIKEY is not set. Set the Cloudant API key before starting.");
+    }
+
+    if (!process.env.CLOUDANT_DB_NAME && !process.env.CLOUDANT_DB_PREFIX) {
+      console.warn("CLOUDANT_DB_NAME is not set. Falling back to prefixed Cloudant databases.");
     }
 
     if (!process.env.IBM_STT_APIKEY) {
